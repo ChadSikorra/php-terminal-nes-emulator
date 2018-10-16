@@ -2,7 +2,6 @@
 namespace Nes\Cpu;
 
 use Nes\Bus\CpuBus;
-use Nes\Cpu\Registers\AddrOrDataAndAdditionalCycle;
 use Nes\Cpu\Registers\Registers;
 use Nes\Debugger;
 
@@ -48,66 +47,66 @@ class Cpu
     /**
      * @param int $mode
      *
-     * @return \Nes\Cpu\Registers\AddrOrDataAndAdditionalCycle
+     * @return array
      * @throws \Exception
      */
-    public function getAddrOrDataWithAdditionalCycle(int $mode): AddrOrDataAndAdditionalCycle
+    public function getAddrOrDataWithAdditionalCycle(int $mode): array
     {
         switch ($mode) {
             case Addressing::Accumulator:
-                return new AddrOrDataAndAdditionalCycle(0x00, 0);
+                return [0x00, 0];
             case Addressing::Implied:
-                return new AddrOrDataAndAdditionalCycle(0x00, 0);
+                return [0x00, 0];
             case Addressing::Immediate:
-                return new AddrOrDataAndAdditionalCycle($this->fetch($this->registers->pc), 0);
+                return [$this->fetch($this->registers->pc), 0];
             case Addressing::Relative:
                 $baseAddr = $this->fetch($this->registers->pc);
                 $addr = $baseAddr < 0x80 ? $baseAddr + $this->registers->pc : $baseAddr + $this->registers->pc - 256;
-                return new AddrOrDataAndAdditionalCycle(
+                return [
                     $addr,
                     ($addr & 0xff00) !== ($this->registers->pc & 0xFF00) ? 1 : 0
-                );
+                ];
             case Addressing::ZeroPage:
-                return new AddrOrDataAndAdditionalCycle($this->fetch($this->registers->pc), 0);
+                return [$this->fetch($this->registers->pc), 0];
             case Addressing::ZeroPageX:
                 $addr = $this->fetch($this->registers->pc);
-                return new AddrOrDataAndAdditionalCycle(
+                return [
                     ($addr + $this->registers->x) & 0xff,
                     0
-                );
+                ];
             case Addressing::ZeroPageY:
                 $addr = $this->fetch($this->registers->pc);
-                return new AddrOrDataAndAdditionalCycle(($addr + $this->registers->y & 0xff), 0);
+                return [($addr + $this->registers->y & 0xff), 0];
             case Addressing::Absolute:
-                return new AddrOrDataAndAdditionalCycle(($this->fetch($this->registers->pc, "Word")), 0);
+                return [($this->fetch($this->registers->pc, "Word")), 0];
             case Addressing::AbsoluteX:
                 $addr = ($this->fetch($this->registers->pc, "Word"));
                 $additionalCycle = ($addr & 0xFF00) !== (($addr + $this->registers->x) & 0xFF00) ? 1 : 0;
-                return new AddrOrDataAndAdditionalCycle(($addr + $this->registers->x) & 0xFFFF, $additionalCycle);
+                return [($addr + $this->registers->x) & 0xFFFF, $additionalCycle];
             case Addressing::AbsoluteY:
                 $addr = ($this->fetch($this->registers->pc, "Word"));
                 $additionalCycle = ($addr & 0xFF00) !== (($addr + $this->registers->y) & 0xFF00) ? 1 : 0;
-                return new AddrOrDataAndAdditionalCycle(($addr + $this->registers->y) & 0xFFFF, $additionalCycle);
+                return [($addr + $this->registers->y) & 0xFFFF, $additionalCycle];
             case Addressing::PreIndexedIndirect:
                 $baseAddr = ($this->fetch($this->registers->pc) + $this->registers->x) & 0xFF;
                 $addr = $this->read($baseAddr) + ($this->read(($baseAddr + 1) & 0xFF) << 8);
-                return new AddrOrDataAndAdditionalCycle(
+                return [
                     $addr & 0xFFFF,
                     ($addr & 0xFF00) !== ($baseAddr & 0xFF00) ? 1 : 0
-                );
+                ];
             case Addressing::PostIndexedIndirect:
                 $addrOrData = $this->fetch($this->registers->pc);
                 $baseAddr = $this->read($addrOrData) + ($this->read(($addrOrData + 1) & 0xFF) << 8);
                 $addr = $baseAddr + $this->registers->y;
-                return new AddrOrDataAndAdditionalCycle(
+                return [
                     $addr & 0xFFFF,
                     ($addr & 0xFF00) !== ($baseAddr & 0xFF00) ? 1 : 0
-                );
+                ];
             case Addressing::IndirectAbsolute:
                 $addrOrData = $this->fetch($this->registers->pc, "Word");
                 $addr = $this->read($addrOrData) +
                     ($this->read(($addrOrData & 0xFF00) | ((($addrOrData & 0xFF) + 1) & 0xFF)) << 8);
-                return new AddrOrDataAndAdditionalCycle($addr & 0xFFFF, 0);
+                return [$addr & 0xFFFF, 0];
             default:
                 echo($mode);
                 throw new \Exception(`Unknown addressing $mode detected.`);
@@ -643,10 +642,10 @@ class Cpu
         }
         $opcode = $this->fetch($this->registers->pc, 'Byte');
         $ocp = $this->opCodeList[$opcode];
-        $data = $this->getAddrOrDataWithAdditionalCycle($ocp->mode);
-        $this->execInstruction($ocp->baseName, $data->addrOrData, $ocp->mode);
+        list($addrOrData, $additionalCycle) = $this->getAddrOrDataWithAdditionalCycle($ocp->mode);
+        $this->execInstruction($ocp->baseName, $addrOrData, $ocp->mode);
 
-        return $ocp->cycle + $data->additionalCycle + ($this->hasBranched ? 1 : 0);
+        return $ocp->cycle + $additionalCycle + ($this->hasBranched ? 1 : 0);
     }
 
     private function debug($opcode)
