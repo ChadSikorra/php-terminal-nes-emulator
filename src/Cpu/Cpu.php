@@ -46,12 +46,12 @@ class Cpu
     }
 
     /**
-     * @param \Nes\Cpu\Addressing $mode
+     * @param int $mode
      *
      * @return \Nes\Cpu\Registers\AddrOrDataAndAdditionalCycle
      * @throws \Exception
      */
-    public function getAddrOrDataWithAdditionalCycle(Addressing $mode): AddrOrDataAndAdditionalCycle
+    public function getAddrOrDataWithAdditionalCycle(int $mode): AddrOrDataAndAdditionalCycle
     {
         switch ($mode) {
             case Addressing::Accumulator:
@@ -189,11 +189,11 @@ class Cpu
     /**
      * @param string $baseName
      * @param int $addrOrData
-     * @param \Nes\Cpu\Addressing $mode
+     * @param int $mode
      *
      * @throws \Exception
      */
-    public function execInstruction(string $baseName, int $addrOrData, Addressing $mode)
+    public function execInstruction(string $baseName, int $addrOrData, int $mode)
     {
         $this->hasBranched = false;
         switch ($baseName) {

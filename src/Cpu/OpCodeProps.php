@@ -8,7 +8,7 @@ class OpCodeProps
     public $mode;
     public $cycle;
 
-    public function __construct(string $fullName, string $baseName, Addressing $mode, int $cycle)
+    public function __construct(string $fullName, string $baseName, int $mode, int $cycle)
     {
         $this->fullName = $fullName;
         $this->baseName = $baseName;
