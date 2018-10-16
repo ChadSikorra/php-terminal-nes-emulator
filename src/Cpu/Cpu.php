@@ -40,7 +40,7 @@ class Cpu
     {
         $this->registers = Registers::getDefault();
         // TODO: flownes set 0x8000 to PC when read(0xfffc) fails.
-        $this->registers->pc = $this->read(0xFFFC, "Word");
+        $this->registers->pc = $this->readWord(0xFFFC);
         printf("Initial pc: %04x\n", $this->registers->pc);
     }
 
@@ -58,54 +58,54 @@ class Cpu
             case Addressing::Implied:
                 return [0x00, 0];
             case Addressing::Immediate:
-                return [$this->fetch($this->registers->pc), 0];
+                return [$this->fetchByte($this->registers->pc), 0];
             case Addressing::Relative:
-                $baseAddr = $this->fetch($this->registers->pc);
+                $baseAddr = $this->fetchByte($this->registers->pc);
                 $addr = $baseAddr < 0x80 ? $baseAddr + $this->registers->pc : $baseAddr + $this->registers->pc - 256;
                 return [
                     $addr,
                     ($addr & 0xff00) !== ($this->registers->pc & 0xFF00) ? 1 : 0
                 ];
             case Addressing::ZeroPage:
-                return [$this->fetch($this->registers->pc), 0];
+                return [$this->fetchByte($this->registers->pc), 0];
             case Addressing::ZeroPageX:
-                $addr = $this->fetch($this->registers->pc);
+                $addr = $this->fetchByte($this->registers->pc);
                 return [
                     ($addr + $this->registers->x) & 0xff,
                     0
                 ];
             case Addressing::ZeroPageY:
-                $addr = $this->fetch($this->registers->pc);
+                $addr = $this->fetchByte($this->registers->pc);
                 return [($addr + $this->registers->y & 0xff), 0];
             case Addressing::Absolute:
-                return [($this->fetch($this->registers->pc, "Word")), 0];
+                return [($this->fetchWord($this->registers->pc)), 0];
             case Addressing::AbsoluteX:
-                $addr = ($this->fetch($this->registers->pc, "Word"));
+                $addr = ($this->fetchWord($this->registers->pc));
                 $additionalCycle = ($addr & 0xFF00) !== (($addr + $this->registers->x) & 0xFF00) ? 1 : 0;
                 return [($addr + $this->registers->x) & 0xFFFF, $additionalCycle];
             case Addressing::AbsoluteY:
-                $addr = ($this->fetch($this->registers->pc, "Word"));
+                $addr = ($this->fetchWord($this->registers->pc));
                 $additionalCycle = ($addr & 0xFF00) !== (($addr + $this->registers->y) & 0xFF00) ? 1 : 0;
                 return [($addr + $this->registers->y) & 0xFFFF, $additionalCycle];
             case Addressing::PreIndexedIndirect:
-                $baseAddr = ($this->fetch($this->registers->pc) + $this->registers->x) & 0xFF;
-                $addr = $this->read($baseAddr) + ($this->read(($baseAddr + 1) & 0xFF) << 8);
+                $baseAddr = ($this->fetchByte($this->registers->pc) + $this->registers->x) & 0xFF;
+                $addr = $this->readByte($baseAddr) + ($this->readByte(($baseAddr + 1) & 0xFF) << 8);
                 return [
                     $addr & 0xFFFF,
                     ($addr & 0xFF00) !== ($baseAddr & 0xFF00) ? 1 : 0
                 ];
             case Addressing::PostIndexedIndirect:
-                $addrOrData = $this->fetch($this->registers->pc);
-                $baseAddr = $this->read($addrOrData) + ($this->read(($addrOrData + 1) & 0xFF) << 8);
+                $addrOrData = $this->fetchByte($this->registers->pc);
+                $baseAddr = $this->readByte($addrOrData) + ($this->readByte(($addrOrData + 1) & 0xFF) << 8);
                 $addr = $baseAddr + $this->registers->y;
                 return [
                     $addr & 0xFFFF,
                     ($addr & 0xFF00) !== ($baseAddr & 0xFF00) ? 1 : 0
                 ];
             case Addressing::IndirectAbsolute:
-                $addrOrData = $this->fetch($this->registers->pc, "Word");
-                $addr = $this->read($addrOrData) +
-                    ($this->read(($addrOrData & 0xFF00) | ((($addrOrData & 0xFF) + 1) & 0xFF)) << 8);
+                $addrOrData = $this->fetchWord($this->registers->pc);
+                $addr = $this->readByte($addrOrData) +
+                    ($this->readByte(($addrOrData & 0xFF00) | ((($addrOrData & 0xFF) + 1) & 0xFF)) << 8);
                 return [$addr & 0xFFFF, 0];
             default:
                 echo($mode);
@@ -113,20 +113,32 @@ class Cpu
         }
     }
 
-    public function fetch(int $addr, string $size = 'Byte'): int
+    private function fetchByte(int $addr): int
     {
-        $this->registers->pc += ($size === "Word") ? 2 : 1;
+        $this->registers->pc += 1;
 
-        return $this->read($addr, $size);
+        return $this->bus->readByCpu($addr & 0xFFFF);
     }
 
-    public function read(int $addr, string $size = null): int
+    private function fetchWord(int $addr): int
+    {
+        $this->registers->pc += 2;
+
+        return $this->readWord($addr);
+    }
+
+    private function readByte(int $addr): int
     {
         $addr &= 0xFFFF;
 
-        return $size === "Word"
-            ? ($this->bus->readByCpu($addr) | $this->bus->readByCpu($addr + 1) << 8)
-            : $this->bus->readByCpu($addr);
+        return $this->bus->readByCpu($addr);
+    }
+
+    private function readWord(int $addr): int
+    {
+        $addr &= 0xFFFF;
+
+        return ($this->bus->readByCpu($addr) | $this->bus->readByCpu($addr + 1) << 8);
     }
 
     public function write(int $addr, int $data)
@@ -144,7 +156,7 @@ class Cpu
     {
         $this->registers->sp++;
 
-        return $this->read(0x100 | ($this->registers->sp & 0xFF), 'Byte');
+        return $this->readByte(0x100 | ($this->registers->sp & 0xFF));
     }
 
     public function branch(int $addr)
@@ -197,17 +209,17 @@ class Cpu
         $this->hasBranched = false;
         switch ($baseName) {
             case 'LDA':
-                $this->registers->a = ($mode == Addressing::Immediate) ? $addrOrData : $this->read($addrOrData);
+                $this->registers->a = ($mode == Addressing::Immediate) ? $addrOrData : $this->readByte($addrOrData);
                 $this->registers->p->negative = !!($this->registers->a & 0x80);
                 $this->registers->p->zero = !$this->registers->a;
                 break;
             case 'LDX':
-                $this->registers->x = ($mode == Addressing::Immediate) ? $addrOrData : $this->read($addrOrData);
+                $this->registers->x = ($mode == Addressing::Immediate) ? $addrOrData : $this->readByte($addrOrData);
                 $this->registers->p->negative = !!($this->registers->x & 0x80);
                 $this->registers->p->zero = !$this->registers->x;
                 break;
             case 'LDY':
-                $this->registers->y = ($mode == Addressing::Immediate) ? $addrOrData : $this->read($addrOrData);
+                $this->registers->y = ($mode == Addressing::Immediate) ? $addrOrData : $this->readByte($addrOrData);
                 $this->registers->p->negative = !!($this->registers->y & 0x80);
                 $this->registers->p->zero = !$this->registers->y;
                 break;
@@ -249,7 +261,7 @@ class Cpu
                 $this->registers->p->zero = !$this->registers->a;
                 break;
             case 'ADC':
-                $data = ($mode == Addressing::Immediate) ? $addrOrData : $this->read($addrOrData);
+                $data = ($mode == Addressing::Immediate) ? $addrOrData : $this->readByte($addrOrData);
                 $operated = $data + $this->registers->a + $this->registers->p->carry;
                 $overflow = (!((($this->registers->a ^ $data) & 0x80) != 0) &&
                     ((($this->registers->a ^ $operated) & 0x80)) != 0);
@@ -260,7 +272,7 @@ class Cpu
                 $this->registers->a = $operated & 0xFF;
                 break;
             case 'AND':
-                $data = ($mode == Addressing::Immediate) ? $addrOrData : $this->read($addrOrData);
+                $data = ($mode == Addressing::Immediate) ? $addrOrData : $this->readByte($addrOrData);
                 $operated = $data & $this->registers->a;
                 $this->registers->p->negative = !!($operated & 0x80);
                 $this->registers->p->zero = !$operated;
@@ -274,7 +286,7 @@ class Cpu
                     $this->registers->p->zero = !$this->registers->a;
                     $this->registers->p->negative = !!($this->registers->a & 0x80);
                 } else {
-                    $data = $this->read($addrOrData);
+                    $data = $this->readByte($addrOrData);
                     $this->registers->p->carry = !!($data & 0x80);
                     $shifted = ($data << 1) & 0xFF;
                     $this->write($addrOrData, $shifted);
@@ -283,34 +295,34 @@ class Cpu
                 }
                 break;
             case 'BIT':
-                $data = $this->read($addrOrData);
+                $data = $this->readByte($addrOrData);
                 $this->registers->p->negative = !!($data & 0x80);
                 $this->registers->p->overflow = !!($data & 0x40);
                 $this->registers->p->zero = !($this->registers->a & $data);
                 break;
             case 'CMP':
-                $data = ($mode == Addressing::Immediate) ? $addrOrData : $this->read($addrOrData);
+                $data = ($mode == Addressing::Immediate) ? $addrOrData : $this->readByte($addrOrData);
                 $compared = $this->registers->a - $data;
                 $this->registers->p->carry = $compared >= 0;
                 $this->registers->p->negative = !!($compared & 0x80);
                 $this->registers->p->zero = !($compared & 0xff);
                 break;
             case 'CPX':
-                $data = ($mode == Addressing::Immediate) ? $addrOrData : $this->read($addrOrData);
+                $data = ($mode == Addressing::Immediate) ? $addrOrData : $this->readByte($addrOrData);
                 $compared = $this->registers->x - $data;
                 $this->registers->p->carry = $compared >= 0;
                 $this->registers->p->negative = !!($compared & 0x80);
                 $this->registers->p->zero = !($compared & 0xff);
                 break;
             case 'CPY':
-                $data = ($mode == Addressing::Immediate) ? $addrOrData : $this->read($addrOrData);
+                $data = ($mode == Addressing::Immediate) ? $addrOrData : $this->readByte($addrOrData);
                 $compared = $this->registers->y - $data;
                 $this->registers->p->carry = $compared >= 0;
                 $this->registers->p->negative = !!($compared & 0x80);
                 $this->registers->p->zero = !($compared & 0xff);
                 break;
             case 'DEC':
-                $data = ($this->read($addrOrData) - 1) & 0xFF;
+                $data = ($this->readByte($addrOrData) - 1) & 0xFF;
                 $this->registers->p->negative = !!($data & 0x80);
                 $this->registers->p->zero = !$data;
                 $this->write($addrOrData, $data);
@@ -326,14 +338,14 @@ class Cpu
                 $this->registers->p->zero = !$this->registers->y;
                 break;
             case 'EOR':
-                $data = ($mode == Addressing::Immediate) ? $addrOrData : $this->read($addrOrData);
+                $data = ($mode == Addressing::Immediate) ? $addrOrData : $this->readByte($addrOrData);
                 $operated = $data ^ $this->registers->a;
                 $this->registers->p->negative = !!($operated & 0x80);
                 $this->registers->p->zero = !$operated;
                 $this->registers->a = $operated & 0xFF;
                 break;
             case 'INC':
-                $data = ($this->read($addrOrData) + 1) & 0xFF;
+                $data = ($this->readByte($addrOrData) + 1) & 0xFF;
                 $this->registers->p->negative = !!($data & 0x80);
                 $this->registers->p->zero = !$data;
                 $this->write($addrOrData, $data);
@@ -355,7 +367,7 @@ class Cpu
                     $this->registers->a = $acc >> 1;
                     $this->registers->p->zero = !$this->registers->a;
                 } else {
-                    $data = $this->read($addrOrData);
+                    $data = $this->readByte($addrOrData);
                     $this->registers->p->carry = !!($data & 0x01);
                     $this->registers->p->zero = !($data >> 1);
                     $this->write($addrOrData, $data >> 1);
@@ -363,7 +375,7 @@ class Cpu
                 $this->registers->p->negative = false;
                 break;
             case 'ORA':
-                $data = ($mode == Addressing::Immediate) ? $addrOrData : $this->read($addrOrData);
+                $data = ($mode == Addressing::Immediate) ? $addrOrData : $this->readByte($addrOrData);
                 $operated = $data | $this->registers->a;
                 $this->registers->p->negative = !!($operated & 0x80);
                 $this->registers->p->zero = !$operated;
@@ -377,7 +389,7 @@ class Cpu
                     $this->registers->p->zero = !$this->registers->a;
                     $this->registers->p->negative = !!($this->registers->a & 0x80);
                 } else {
-                    $data = $this->read($addrOrData);
+                    $data = $this->readByte($addrOrData);
                     $writeData = ($data << 1 | ($this->registers->p->carry ? 0x01 : 0x00)) & 0xFF;
                     $this->write($addrOrData, $writeData);
                     $this->registers->p->carry = !!($data & 0x80);
@@ -393,7 +405,7 @@ class Cpu
                     $this->registers->p->zero = !$this->registers->a;
                     $this->registers->p->negative = !!($this->registers->a & 0x80);
                 } else {
-                    $data = $this->read($addrOrData);
+                    $data = $this->readByte($addrOrData);
                     $writeData = $data >> 1 | ($this->registers->p->carry ? 0x80 : 0x00);
                     $this->write($addrOrData, $writeData);
                     $this->registers->p->carry = !!($data & 0x01);
@@ -402,7 +414,7 @@ class Cpu
                 }
                 break;
             case 'SBC':
-                $data = ($mode == Addressing::Immediate) ? $addrOrData : $this->read($addrOrData);
+                $data = ($mode == Addressing::Immediate) ? $addrOrData : $this->readByte($addrOrData);
                 $operated = $this->registers->a - $data - ($this->registers->p->carry ? 0 : 1);
                 $overflow = ((($this->registers->a ^ $operated) & 0x80) != 0 &&
                     (($this->registers->a ^ $data) & 0x80) != 0);
@@ -517,7 +529,7 @@ class Cpu
                 $this->registers->p->interrupt = true;
                 // Ignore interrupt when already set.
                 if (!$interrupt) {
-                    $this->registers->pc = $this->read(0xFFFE, "Word");
+                    $this->registers->pc = $this->readWord(0xFFFE);
                 }
                 $this->registers->pc--;
                 break;
@@ -531,7 +543,7 @@ class Cpu
                 $this->registers->pc += 2;
                 break;
             case 'LAX':
-                $this->registers->a = $this->registers->x = $this->read($addrOrData);
+                $this->registers->a = $this->registers->x = $this->readByte($addrOrData);
                 $this->registers->p->negative = !!($this->registers->a & 0x80);
                 $this->registers->p->zero = !$this->registers->a;
                 break;
@@ -540,13 +552,13 @@ class Cpu
                 $this->write($addrOrData, $operated);
                 break;
             case 'DCP':
-                $operated = ($this->read($addrOrData) - 1) & 0xFF;
+                $operated = ($this->readByte($addrOrData) - 1) & 0xFF;
                 $this->registers->p->negative = !!((($this->registers->a - $operated) & 0x1FF) & 0x80);
                 $this->registers->p->zero = !(($this->registers->a - $operated) & 0x1FF);
                 $this->write($addrOrData, $operated);
                 break;
             case 'ISB':
-                $data = ($this->read($addrOrData) + 1) & 0xFF;
+                $data = ($this->readByte($addrOrData) + 1) & 0xFF;
                 $operated = (~$data & 0xFF) + $this->registers->a + $this->registers->p->carry;
                 $overflow = (!((($this->registers->a ^ $data) & 0x80) != 0) &&
                     ((($this->registers->a ^ $operated) & 0x80)) != 0);
@@ -558,7 +570,7 @@ class Cpu
                 $this->write($addrOrData, $data);
                 break;
             case 'SLO':
-                $data = $this->read($addrOrData);
+                $data = $this->readByte($addrOrData);
                 $this->registers->p->carry = !!($data & 0x80);
                 $data = ($data << 1) & 0xFF;
                 $this->registers->a |= $data;
@@ -567,7 +579,7 @@ class Cpu
                 $this->write($addrOrData, $data);
                 break;
             case 'RLA':
-                $data = ($this->read($addrOrData) << 1) + $this->registers->p->carry;
+                $data = ($this->readByte($addrOrData) << 1) + $this->registers->p->carry;
                 $this->registers->p->carry = !!($data & 0x100);
                 $this->registers->a = ($data & $this->registers->a) & 0xFF;
                 $this->registers->p->negative = !!($this->registers->a & 0x80);
@@ -575,7 +587,7 @@ class Cpu
                 $this->write($addrOrData, $data);
                 break;
             case 'SRE':
-                $data = $this->read($addrOrData);
+                $data = $this->readByte($addrOrData);
                 $this->registers->p->carry = !!($data & 0x01);
                 $data >>= 1;
                 $this->registers->a ^= $data;
@@ -584,7 +596,7 @@ class Cpu
                 $this->write($addrOrData, $data);
                 break;
             case 'RRA':
-                $data = $this->read($addrOrData);
+                $data = $this->readByte($addrOrData);
                 $carry = !!($data & 0x01);
                 $data = ($data >> 1) | ($this->registers->p->carry ? 0x80 : 0x00);
                 $operated = $data + $this->registers->a + $carry;
@@ -611,7 +623,7 @@ class Cpu
         $this->push($this->registers->pc & 0xFF);
         $this->pushStatus();
         $this->registers->p->interrupt = true;
-        $this->registers->pc = $this->read(0xFFFA, "Word");
+        $this->registers->pc = $this->readWord(0xFFFA);
     }
 
     public function processIrq()
@@ -625,7 +637,7 @@ class Cpu
         $this->push($this->registers->pc & 0xFF);
         $this->pushStatus();
         $this->registers->p->interrupt = true;
-        $this->registers->pc = $this->read(0xFFFE, "Word");
+        $this->registers->pc = $this->readWord(0xFFFE);
     }
 
     /**
@@ -640,7 +652,7 @@ class Cpu
         if ($this->interrupts->isIrqAssert()) {
             $this->processIrq();
         }
-        $opcode = $this->fetch($this->registers->pc, 'Byte');
+        $opcode = $this->fetchByte($this->registers->pc);
         $ocp = $this->opCodeList[$opcode];
         list($addrOrData, $additionalCycle) = $this->getAddrOrDataWithAdditionalCycle($ocp->mode);
         $this->execInstruction($ocp->baseName, $addrOrData, $ocp->mode);
