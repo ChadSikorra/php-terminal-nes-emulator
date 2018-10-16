@@ -351,15 +351,36 @@ class Ppu
         }
     }
 
+    const SPRITE_CONSTANT_MAP = [
+        [0x01 << ~~(0 / 8), 0 % 8],
+        [0x01 << ~~(1 / 8), 1 % 8],
+        [0x01 << ~~(2 / 8), 2 % 8],
+        [0x01 << ~~(3 / 8), 3 % 8],
+        [0x01 << ~~(4 / 8), 4 % 8],
+        [0x01 << ~~(5 / 8), 5 % 8],
+        [0x01 << ~~(6 / 8), 6 % 8],
+        [0x01 << ~~(7 / 8), 7 % 8],
+        [0x01 << ~~(8 / 8), 8 % 8],
+        [0x01 << ~~(9 / 8), 9 % 8],
+        [0x01 << ~~(10 / 8), 10 % 8],
+        [0x01 << ~~(11 / 8), 11 % 8],
+        [0x01 << ~~(12 / 8), 12 % 8],
+        [0x01 << ~~(13 / 8), 13 % 8],
+        [0x01 << ~~(14 / 8), 14 % 8],
+        [0x01 << ~~(15 / 8), 15 % 8],
+    ];
+
     public function buildSprite(int $spriteId, int $offset): array
     {
+        $spriteAddressBase = $spriteId * 16;
         $sprite = array_fill(0, 8, array_fill(0, 8, 0));
         for ($i = 0; $i < 16; $i = ($i + 1) | 0) {
+            $addr = $spriteAddressBase + $i + $offset;
+            $ram = $this->readCharacterRAM($addr);
+            list($addend, $spriteOffsetBase) = self::SPRITE_CONSTANT_MAP[$i];
             for ($j = 0; $j < 8; $j = ($j + 1) | 0) {
-                $addr = $spriteId * 16 + $i + $offset;
-                $ram = $this->readCharacterRAM($addr);
                 if ($ram & (0x80 >> $j)) {
-                    $sprite[$i % 8][$j] += 0x01 << ~~($i / 8);
+                    $sprite[$spriteOffsetBase][$j] += $addend;
                 }
             }
         }
