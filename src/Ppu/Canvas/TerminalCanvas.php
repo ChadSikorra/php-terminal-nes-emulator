@@ -73,13 +73,14 @@ class TerminalCanvas implements CanvasInterface
             $frame = '';
             for ($y = 0; $y < $screenHeight; $y++) {
                 for ($x = 0; $x < $screenWidth; $x++) {
-                    $pixelCanvasNumber = ($x + ($screenWidth * $y)) * 4;
+                    $pixelCanvasNumber = ($x + ($screenWidth * $y));
                     $charPosition = floor($x / 2) + (floor($y / 4) * $charWidth);
 
+                    $pixelValue = $canvasBuffer[$pixelCanvasNumber];
                     $pixelAvg = (
-                        $canvasBuffer[$pixelCanvasNumber] +
-                        $canvasBuffer[$pixelCanvasNumber + 1] +
-                        $canvasBuffer[$pixelCanvasNumber + 2]
+                            ($pixelValue & 0xff) +
+                            (($pixelValue >> 8) & 0xff) +
+                            (($pixelValue >> 16) & 0xff)
                         ) / 3;
                     if ($pixelAvg > $this->threshold) {
                         $chars[$charPosition] |= $this->pixelMap[$y % 4][$x % 2];
