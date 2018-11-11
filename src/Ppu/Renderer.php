@@ -6,7 +6,7 @@ use Nes\Ppu\Canvas\CanvasInterface;
 class Renderer
 {
     /** @var array */
-    public $frameBuffer;
+    public $frameBuffer = [];
     /** @var \Nes\Ppu\Tile[] */
     public $background;
     /** @var int */
@@ -43,8 +43,8 @@ class Renderer
 
     public function shouldPixelHide(int $x, int $y): bool
     {
-        $tileX = ~~($x / 8);
-        $tileY = ~~($y / 8);
+        $tileX = (int)($x / 8);
+        $tileY = (int)($y / 8);
         $backgroundIndex = $tileY * 33 + $tileX;
         $sprite = $this->background[$backgroundIndex] && $this->background[$backgroundIndex]->pattern;
         if (! $sprite) {
@@ -56,63 +56,92 @@ class Renderer
 
     public function render(RenderingData $data)
     {
+        if ($data->background or $data->sprites) {
+            $paletteColorsMap = [];
+            $colors = self::COLORS;
+            foreach ($data->palette as $key => $colorIndex) {
+                $paletteColorsMap[$key] = $colors[$colorIndex];
+            }
+        }
         if ($data->background) {
-            $this->renderBackground($data->background, $data->palette);
+            $this->renderBackground($data->background, $paletteColorsMap);
         }
         if ($data->sprites) {
-            $this->renderSprites($data->sprites, $data->palette);
+            $this->renderSprites($data->sprites, $paletteColorsMap);
         }
 
         $this->canvas->draw($this->frameBuffer);
     }
 
-    public function renderBackground(array $background, array $palette)
+    public function renderBackground(array $background, array $paletteColorsMap)
     {
         $count_background = count($background);
         $this->background = $background;
-        for ($i = 0; $i < $count_background; $i += 1 | 0) {
+        for ($i = 0; $i < $count_background; ++$i) {
             $x = ($i % 33) * 8;
-            $y = ~~($i / 33) * 8;
-            $this->renderTile($background[$i], $x, $y, $palette);
+            $y = (int)($i / 33) * 8;
+            $this->renderTile($background[$i], $x, $y, $paletteColorsMap);
         }
     }
 
-    public function renderSprites(array $sprites, array $palette)
+    public function renderSprites(array $sprites, array $paletteColorsMap)
     {
         foreach ($sprites as $sprite) {
             if ($sprite) {
-                $this->renderSprite($sprite, $palette);
+                $this->renderSprite($sprite, $paletteColorsMap);
             }
         }
     }
 
-    public function renderTile(Tile $tile, int $tileX, int $tileY, array $palette)
+    public function renderTile(Tile $tile, int $tileX, int $tileY, array $paletteColorsMap)
     {
         //{ sprite, paletteId, scrollX, scrollY }: Tile
-        $offsetX = $tile->scrollX % 8;
-        $offsetY = $tile->scrollY % 8;
+        $offsetX = $tileX - ($tile->scrollX % 8);
+        $offsetY = $tileY - ($tile->scrollY % 8);
         $paletteIndexBase = $tile->paletteId * 4;
-        for ($i = 0; $i < 8; $i = ($i + 1) | 0) {
-            $y = $tileY + $i - $offsetY;
-            $frameBufferOffsetY = $y * 0x100;
-            if ($y >= 0 && $y < 224) {
-                for ($j = 0; $j < 8; $j = ($j + 1) | 0) {
-                    $x = $tileX + $j - $offsetX;
-                    if ($x >= 0 && 0xFF >= $x) {
-                        $colorId = $palette[$paletteIndexBase + $tile->pattern[$i][$j]];
-                        $color = self::COLORS[$colorId];
-                        $this->frameBuffer[$x + $frameBufferOffsetY] = $color;
+        $colorMap = [];
+        foreach ($paletteColorsMap as $key => $value) {
+            $colorMap[$key - $paletteIndexBase] = $value;
+        }
+        if ($offsetX >= 0 && 0xFF >= ($offsetX + 7)) {
+            for ($i = 0; $i < 8; ++$i) {
+                $y = $i + $offsetY;
+                if ($y >= 0 && $y < 224) {
+                    $frameBufferOffsetY = $y * 0x100;
+                    $pattern = $tile->pattern[$i];
+                    $frameBufferOffset = $offsetX + $frameBufferOffsetY;
+                    $this->frameBuffer[$frameBufferOffset] = $colorMap[$pattern[0]];
+                    $this->frameBuffer[++$frameBufferOffset] = $colorMap[$pattern[1]];
+                    $this->frameBuffer[++$frameBufferOffset] = $colorMap[$pattern[2]];
+                    $this->frameBuffer[++$frameBufferOffset] = $colorMap[$pattern[3]];
+                    $this->frameBuffer[++$frameBufferOffset] = $colorMap[$pattern[4]];
+                    $this->frameBuffer[++$frameBufferOffset] = $colorMap[$pattern[5]];
+                    $this->frameBuffer[++$frameBufferOffset] = $colorMap[$pattern[6]];
+                    $this->frameBuffer[++$frameBufferOffset] = $colorMap[$pattern[7]];
+                }
+            }
+        } else {
+            for ($i = 0; $i < 8; ++$i) {
+                $y = $i + $offsetY;
+                if ($y >= 0 && $y < 224) {
+                    $frameBufferOffsetY = $y * 0x100;
+                    $pattern = $tile->pattern[$i];
+                    for ($j = 0; $j < 8; ++$j) {
+                        $x = $j + $offsetX;
+                        if ($x >= 0 && 0xFF >= $x) {
+                            $this->frameBuffer[$x + $frameBufferOffsetY] = $paletteColorsMap[$paletteIndexBase + $pattern[$j]];
+                        }
                     }
                 }
             }
         }
     }
 
-    public function renderSprite(SpriteWithAttribute $sprite, array $palette)
+    public function renderSprite(SpriteWithAttribute $sprite, array $paletteColorsMap)
     {
-        $isVerticalReverse = !!($sprite->attribute & 0x80);
-        $isHorizontalReverse = !!($sprite->attribute & 0x40);
-        $isLowPriority = !!($sprite->attribute & 0x20);
+        $isVerticalReverse = (bool)($sprite->attribute & 0x80);
+        $isHorizontalReverse = (bool)($sprite->attribute & 0x40);
+        $isLowPriority = (bool)($sprite->attribute & 0x20);
         $paletteId = $sprite->attribute & 0x03;
         $paletteIndexBase = $paletteId * 4 + 0x10;
         for ($i = 0; $i < 8; $i = ($i + 1) | 0) {
@@ -124,9 +153,7 @@ class Renderer
                     continue;
                 }
                 if ($sprite->sprite[$i][$j]) {
-                    $colorId = $palette[$paletteIndexBase + $sprite->sprite[$i][$j]];
-                    $color = self::COLORS[$colorId];
-                    $this->frameBuffer[$x + $frameBufferOffsetY] = $color;
+                    $this->frameBuffer[$x + $frameBufferOffsetY] = $paletteColorsMap[$paletteIndexBase + $sprite->sprite[$i][$j]];
                 }
             }
         }
