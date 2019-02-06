@@ -103,17 +103,22 @@ class Nes
      */
     public function frame()
     {
+        $dma = $this->dma;
+        $cpu = $this->cpu;
+        $ppu = $this->ppu;
+        $keypad = $this->cpu->bus->keypad;
+        $renderer = $this->renderer;
         while (true) {
             $cycle = 0;
-            if ($this->dma->isDmaProcessing()) {
-                $this->dma->runDma();
+            if ($dma->isDmaProcessing()) {
+                $dma->runDma();
                 $cycle = 514;
             }
-            $cycle += $this->cpu->run();
-            $renderingData = $this->ppu->run($cycle * 3);
-            if ($renderingData) {
-                $this->cpu->bus->keypad->fetch();
-                $this->renderer->render($renderingData);
+            $cycle += $cpu->run();
+            $renderingData = $ppu->run($cycle * 3);
+            if (!is_null($renderingData)) {
+                $keypad->fetch();
+                $renderer->render($renderingData);
                 break;
             }
         }

@@ -16,12 +16,12 @@ class Ram
         $this->ram = array_fill(0, count($this->ram) - 1, 0);
     }
 
-    public function read(int $addr)
+    public function read($addr)
     {
         return $this->ram[$addr];
     }
 
-    public function write(int $addr, int $val)
+    public function write($addr, $val)
     {
         $this->ram[$addr] = $val;
     }

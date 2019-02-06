@@ -22,7 +22,10 @@ class Dma
         $this->ramAddr = 0x0000;
     }
 
-    public function isDmaProcessing(): bool
+    /**
+     * @return bool
+     */
+    public function isDmaProcessing()
     {
         return $this->isProcessing;
     }
@@ -32,13 +35,19 @@ class Dma
         if (! $this->isProcessing) {
             return;
         }
-        for ($i = 0; $i < 0x100; $i = ($i + 1) | 0) {
-            $this->ppu->transferSprite($i, $this->ram->read($this->ramAddr + $i));
+        $ppu = $this->ppu;
+        $ramAddr = $this->ramAddr;
+        $ram = $this->ram;
+        for ($i = 0; $i < 0x100; ++$i) {
+            $ppu->transferSprite($i, $ram->read($ramAddr + $i));
         }
         $this->isProcessing = false;
     }
 
-    public function write(int $data)
+    /**
+     * @param int $data
+     */
+    public function write($data)
     {
         $this->ramAddr = $data << 8;
         $this->isProcessing = true;

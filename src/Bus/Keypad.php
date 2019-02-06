@@ -28,6 +28,9 @@ class Keypad
     public function fetch()
     {
         $key = fread($this->file, 1);
+        if ($key === 'P') {
+            die;
+        }
 
         if (! empty($key)) {
             $this->keyDown($key);
@@ -66,7 +69,7 @@ class Keypad
         return $keyIndex;
     }
 
-    public function write(int $data)
+    public function write($data)
     {
         if ($data & 0x01) {
             $this->isSet = true;
@@ -77,7 +80,7 @@ class Keypad
         }
     }
 
-    public function read(): bool
+    public function read()
     {
         return $this->keyRegistors[$this->index++];
     }

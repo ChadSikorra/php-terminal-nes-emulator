@@ -90,9 +90,10 @@ class TerminalCanvas implements CanvasInterface
         $pixelAvgCache7 = $this->pixelAvgCache7;
 
         //Calculate current FPS
-        if ($this->currentSecond != time()) {
+        $time = time();
+        if ($this->currentSecond != $time) {
             $this->fps = $this->framesInSecond;
-            $this->currentSecond = time();
+            $this->currentSecond = $time;
             $this->framesInSecond = 1;
         } else {
             ++$this->framesInSecond;
@@ -103,7 +104,7 @@ class TerminalCanvas implements CanvasInterface
         $charWidth = $screenWidth / 2;
         $charHeight = $screenHeight / 4;
 
-        if ($canvasBuffer != $this->lastFrameCanvasBuffer) {
+        if ($canvasBuffer !== $this->lastFrameCanvasBuffer) {
             $breilleMap = $this->brailleMap;
 
             $frame = '';
@@ -151,7 +152,7 @@ class TerminalCanvas implements CanvasInterface
                 $content = "\e[{$this->height}A\e[{$this->width}D";
             }
 
-            $content .= sprintf('FPS: %3d - Frame Skip: %3d' . PHP_EOL, $this->fps, $this->framesInSecond) . $frame;
+            $content .= sprintf('FPS: %3d' . PHP_EOL, $this->fps) . $frame;
             echo $content;
 
             $this->height = $charHeight + 1;

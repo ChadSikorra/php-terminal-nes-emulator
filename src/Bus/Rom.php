@@ -19,8 +19,9 @@ class Rom
         return $this->size;
     }
 
-    public function read(int $addr)
+    public function read($addr)
     {
+        return $this->rom[$addr];
         if (! isset($this->rom[$addr])) {
             throw new \RuntimeException(sprintf(
                 "Invalid address on rom read. Address: 0x%s Rom: 0x0000 - 0x%s",

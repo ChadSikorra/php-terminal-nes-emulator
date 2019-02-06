@@ -8,12 +8,12 @@ class Interrupts
     /** @var bool */
     public $irq = false;
 
-    public function isNmiAssert(): bool
+    public function isNmiAssert()
     {
         return $this->nmi;
     }
 
-    public function isIrqAssert(): bool
+    public function isIrqAssert()
     {
         return $this->irq;
     }

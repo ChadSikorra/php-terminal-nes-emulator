@@ -7,6 +7,7 @@ class Palette
 {
     /** @var \Nes\Bus\Ram */
     public $paletteRam;
+    private $cache = null;
 
     public function __construct()
     {
@@ -25,6 +26,10 @@ class Palette
 
     public function read(): array
     {
+        if (!is_null($this->cache)) {
+            return $this->cache;
+        }
+
         $return = [];
         foreach ($this->paletteRam->ram as $i => $value) {
             if ($this->isSpriteMirror($i)) {
@@ -35,7 +40,13 @@ class Palette
                 $return[$i] = $value;
             }
         }
-        return $return;
+
+        return $this->cache = $return;
+    }
+
+    public function isChanged(): bool
+    {
+        return is_null($this->cache);
     }
 
     public function getPaletteAddr(int $addr): int
@@ -47,6 +58,7 @@ class Palette
 
     public function write(int $addr, int $data)
     {
+        $this->cache = null;
         //$this->ram[$this->getPaletteAddr($addr)] = $data;
         $this->paletteRam->write($this->getPaletteAddr($addr), $data);
     }

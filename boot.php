@@ -1,6 +1,14 @@
 <?php
 require_once "vendor/autoload.php";
 
+
+sample_prof_start(50);
+register_shutdown_function(function(){
+sample_prof_end();              // disable profiler
+$data = sample_prof_get_data(); // retrieve profiling data
+file_put_contents('prof.txt', serialize($data));
+});
+
 $c = new Console_CommandLine();
 $c->description = 'php-terminal-nes-emulator';
 $c->version = '1.0.0';
