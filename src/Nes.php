@@ -11,6 +11,7 @@ use Nes\Cpu\Interrupts;
 use Nes\Bus\Keypad;
 use Nes\NesFile\NesFile;
 use Nes\Ppu\Canvas\CanvasInterface;
+use Nes\Ppu\Canvas\TerminalCanvas;
 use Nes\Ppu\Ppu;
 use Nes\Ppu\Renderer;
 
@@ -101,13 +102,12 @@ class Nes
     /**
      * @throws \Exception
      */
-    public function frame()
+    public function nextFrame()
     {
         $dma = $this->dma;
         $cpu = $this->cpu;
         $ppu = $this->ppu;
         $keypad = $this->cpu->bus->keypad;
-        $renderer = $this->renderer;
         while (true) {
             $cycle = 0;
             if ($dma->isDmaProcessing()) {
@@ -118,8 +118,7 @@ class Nes
             $renderingData = $ppu->run($cycle * 3);
             if (!is_null($renderingData)) {
                 $keypad->fetch();
-                $renderer->render($renderingData);
-                break;
+                return $renderingData;
             }
         }
     }
@@ -129,8 +128,37 @@ class Nes
      */
     public function start()
     {
+        $renderer = $this->renderer;
+        $runtime = new \parallel\Runtime("rendering_thread_bootstrap.php");
+        $currentFrame = $this->nextFrame();
+        $microTime = microtime(true);
+        $last = floor($microTime);
+        $fps = $frame = 0;
         do {
-            $this->frame();
+            $microTime = microtime(true);
+            $second = floor($microTime);
+            if ($second !== $last) {
+                $fps = $frame;
+                $frame = 0;
+            }
+            $frame++;
+
+            $last = floor($microTime);
+            if (!isset($wait) or $wait->done()) {
+                $wait = $runtime->run(
+                    function($serializedFrame, $frame) {
+                        global $threadedRenderer;
+                        global $fps;
+                        $fps = $frame;
+                        $threadedRenderer->render($serializedFrame);
+                        return 1;
+                    },
+                    [serialize($currentFrame), $fps]
+                );
+            }
+            $nextFrame = $this->nextFrame();
+//            $wait->value();
+            $currentFrame = $nextFrame;
         } while (true);
     }
 

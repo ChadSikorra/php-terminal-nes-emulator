@@ -78,8 +78,13 @@ class TerminalCanvas implements CanvasInterface
         }
     }
 
-    public function draw(array $canvasBuffer)
+    const SCREEN_WIDTH = 256;
+    const SCREEN_HEIGHT = 224;
+    const CHAR_WIDTH = self::SCREEN_WIDTH / 2;
+    const CHAR_HEIGHT = self::SCREEN_HEIGHT / 4;
+    public function draw($canvasBuffer, $is_rendered)
     {
+        global $fps;
         $pixelAvgCache0 = $this->pixelAvgCache0;
         $pixelAvgCache1 = $this->pixelAvgCache1;
         $pixelAvgCache2 = $this->pixelAvgCache2;
@@ -99,22 +104,17 @@ class TerminalCanvas implements CanvasInterface
             ++$this->framesInSecond;
         }
 
-        $screenWidth = 256;
-        $screenHeight = 224;
-        $charWidth = $screenWidth / 2;
-        $charHeight = $screenHeight / 4;
-
-        if ($canvasBuffer !== $this->lastFrameCanvasBuffer) {
+        if ($is_rendered and $canvasBuffer !== $this->lastFrameCanvasBuffer) {
             $breilleMap = $this->brailleMap;
 
             $frame = '';
-            for ($y = 0, $y_quarter = 0; $y < $screenHeight; $y += 4, ++$y_quarter) {
-                $pixelCanvasNumberY0 = ($screenWidth * $y);
-                $pixelCanvasNumberY1 = $pixelCanvasNumberY0 + $screenWidth;
-                $pixelCanvasNumberY2 = $pixelCanvasNumberY1 + $screenWidth;
-                $pixelCanvasNumberY3 = $pixelCanvasNumberY2 + $screenWidth;
+            for ($y = 0, $y_quarter = 0; $y < self::SCREEN_HEIGHT; $y += 4, ++$y_quarter) {
+                $pixelCanvasNumberY0 = (self::SCREEN_WIDTH * $y);
+                $pixelCanvasNumberY1 = $pixelCanvasNumberY0 + self::SCREEN_WIDTH;
+                $pixelCanvasNumberY2 = $pixelCanvasNumberY1 + self::SCREEN_WIDTH;
+                $pixelCanvasNumberY3 = $pixelCanvasNumberY2 + self::SCREEN_WIDTH;
 
-                for ($x = 0, $x_half = 0; $x < $screenWidth + 1; $x += 2, ++$x_half) {
+                for ($x = 0, $x_half = 0; $x < self::SCREEN_WIDTH + 1; $x += 2, ++$x_half) {
                     $pixelCanvasNumber = $x + $pixelCanvasNumberY0;
                     $pixelCanvasNumber2 = $pixelCanvasNumber + 1;
                     $pixelCanvasNumber3 = $x + $pixelCanvasNumberY1;
@@ -137,7 +137,7 @@ class TerminalCanvas implements CanvasInterface
 
                     $frame .= $breilleMap[$char];
 
-                    if ($x >= $screenWidth) {
+                    if ($x >= self::SCREEN_WIDTH) {
                         $frame .= PHP_EOL;
                     }
                 }
@@ -152,11 +152,11 @@ class TerminalCanvas implements CanvasInterface
                 $content = "\e[{$this->height}A\e[{$this->width}D";
             }
 
-            $content .= sprintf('FPS: %3d' . PHP_EOL, $this->fps) . $frame;
+            $content .= sprintf('FPS: %3d, Rendering FPS: %3d' . PHP_EOL, $fps, $this->fps) . $frame;
             echo $content;
 
-            $this->height = $charHeight + 1;
-            $this->width = $charWidth;
+            $this->height = self::CHAR_HEIGHT + 1;
+            $this->width = self::CHAR_WIDTH;
         }
     }
 }

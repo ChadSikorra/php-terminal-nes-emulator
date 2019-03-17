@@ -66,12 +66,14 @@ class Renderer
      */
     public function render($data)
     {
+        $is_rendered = false;
         if ($data->background or $data->sprites) {
             $paletteColorsMap = [];
             $colors = self::COLORS;
             foreach ($data->palette as $key => $colorIndex) {
                 $paletteColorsMap[$key] = $colors[$colorIndex];
             }
+            $is_rendered = true;
         }
         if ($data->background) {
             $this->renderBackground($data->background, $paletteColorsMap);
@@ -80,7 +82,7 @@ class Renderer
             $this->renderSprites($data->sprites, $paletteColorsMap);
         }
 
-        $this->canvas->draw($this->frameBuffer);
+        $this->canvas->draw($this->frameBuffer, $is_rendered);
     }
 
     /**

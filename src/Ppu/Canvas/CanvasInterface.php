@@ -3,5 +3,5 @@ namespace Nes\Ppu\Canvas;
 
 interface CanvasInterface
 {
-    public function draw(array $frameBuffer);
+    public function draw($frameBuffer, $is_rendered);
 }
