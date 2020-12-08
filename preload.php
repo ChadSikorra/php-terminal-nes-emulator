@@ -1,4 +1,5 @@
 <?php
+require_once 'src/Ppu/Canvas/CanvasInterface.php';
 require_once 'src/Bus/CpuBus.php';
 require_once 'src/Bus/Keypad.php';
 require_once 'src/Bus/PpuBus.php';
@@ -18,7 +19,6 @@ require_once 'src/NesFile/NesRom.php';
 require_once 'src/Ppu/Canvas/NullCanvas.php';
 require_once 'src/Ppu/Canvas/PngCanvas.php';
 require_once 'src/Ppu/Canvas/TerminalCanvas.php';
-require_once 'src/Ppu/Canvas/CanvasInterface.php';
 require_once 'src/Ppu/Palette.php';
 require_once 'src/Ppu/Ppu.php';
 require_once 'src/Ppu/Renderer.php';
