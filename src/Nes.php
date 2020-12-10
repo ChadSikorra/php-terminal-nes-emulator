@@ -32,7 +32,7 @@ class Nes
      */
     public function start()
     {
-        $runtime = new \parallel\Runtime("rendering_thread_bootstrap.php");
+        $runtime = new \parallel\Runtime("processing_thread_bootstrap.php");
         $channel = Channel::make('frameChannel', 10);
         $channel_notify = Channel::make('notifyChannel', Channel::Infinite);
         $runtime->run(
