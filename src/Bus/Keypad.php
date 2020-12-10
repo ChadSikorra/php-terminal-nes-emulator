@@ -19,6 +19,9 @@ class Keypad
     public function __construct()
     {
         exec('stty -icanon -echo');
+        register_shutdown_function(function() {
+            exec('stty echo');
+        });
         $this->file = fopen('php://stdin', 'r');
         stream_set_blocking($this->file, false);
 
