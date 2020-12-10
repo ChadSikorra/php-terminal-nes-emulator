@@ -53,7 +53,7 @@ class Renderer
         $tileX = (int)($x / 8);
         $tileY = (int)($y / 8);
         $backgroundIndex = $tileY * 33 + $tileX;
-        $sprite = $this->background[$backgroundIndex] && $this->background[$backgroundIndex]->pattern;
+        $sprite = $this->background[$backgroundIndex]->pattern ?? null;
         if (! $sprite) {
             return true;
         }
@@ -182,13 +182,13 @@ class Renderer
         for ($i = 0; $i < 8; ++$i) {
             $y = $sprite->y + $verticalTable[$i];
             $frameBufferOffsetY = $y * 0x100;
-            $spriteJ = $sprite->sprite[$i];
+            $spriteJ = $sprite->sprite[$i] ?? null;
             for ($j = 0; $j < 8; ++$j) {
                 $x = $sprite->x + $horizontalTable[$j];
                 if ($isLowPriority && $this->shouldPixelHide($x, $y)) {
                     continue;
                 }
-                if ($spriteJ[$j]) {
+                if ($spriteJ[$j] ?? null) {
                     $this->frameBuffer[$x + $frameBufferOffsetY] = $paletteColorsMap[$paletteIndexBase + $spriteJ[$j]];
                 }
             }
