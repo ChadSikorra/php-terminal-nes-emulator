@@ -2,7 +2,6 @@
 namespace Nes;
 
 use Nes\Ppu\Canvas\CanvasInterface;
-use Nes\Ppu\Canvas\SdlffiCanvas;
 use Nes\Ppu\Renderer;
 use parallel\Channel;
 
