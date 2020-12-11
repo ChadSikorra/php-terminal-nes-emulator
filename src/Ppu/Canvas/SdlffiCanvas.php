@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace Nes\Ppu\Canvas;
 
+use Nes\Ppu\Renderer;
 use Serafim\SDL\Event;
 use Serafim\SDL\SDL;
 
@@ -22,6 +23,9 @@ final class SdlffiCanvas implements CanvasInterface
     private $renderer;
     private $sdl;
     private $event;
+    private $color_cache = [];
+    private $sdl_points_cache;
+    private $sdl_points_value_cache;
 
     public function __construct()
     {
@@ -31,38 +35,51 @@ final class SdlffiCanvas implements CanvasInterface
         $this->window = $this->sdl->SDL_CreateWindow(
             'php-terminal-nes-emulator', SDL::SDL_WINDOWPOS_UNDEFINED, SDL::SDL_WINDOWPOS_UNDEFINED, 256, 224, SDL::SDL_WINDOW_OPENGL
         );
-        $this->renderer = $this->sdl->SDL_CreateRenderer($this->window, 0, SDL::SDL_RENDERER_ACCELERATED|SDL::SDL_RENDERER_PRESENTVSYNC);
+        $this->renderer = $this->sdl->SDL_CreateRenderer($this->window, 0, 0);
 
         $this->event = $this->sdl->new(Event::class);
         $this->sdl->SDL_RenderClear($this->renderer);
+        $this->color_cache = array_fill_keys(Renderer::COLORS, []);
+        $this->sdl_points_cache = $this->sdl->new('SDL_Point[' . 224 * 256 .']');
+        $this->sdl_points_value_cache = [];
+        for ($y = 0; $y < 224; $y++) {
+            $y_x_100 = $y * 0x100;
+            for ($x = 0; $x < 256; $x++) {
+                $index = ($x + $y_x_100);
+                $point = $this->sdl->new('SDL_Point');
+                $point->x = $x;
+                $point->y = $y;
+                $this->sdl_points_value_cache[$index] = $point;
+            }
+        }
     }
 
 
 
     public function draw($frameBuffer, $is_rendered)
     {
-        $colorSeparated = [];
-        for ($y = 0; $y < 224; $y++) {
-            $y_x_100 = $y * 0x100;
-            for ($x = 0; $x < 256; $x++) {
-                $index = ($x + $y_x_100);
-                $color = $frameBuffer[$index];
-                $colorSeparated[$color] ??= [];
-                $colorSeparated[$color][] = [$x, $y];
-            }
+        $colorSeparated = $this->color_cache;
+        for ($index = 0; $index < 224 * 256; $index++) {
+            $colorSeparated[$frameBuffer[$index]][] = $index;
         }
+        $sdl_points = $this->sdl_points_cache;
+        $sdl_points_value_cache = $this->sdl_points_value_cache;
 
         foreach ($colorSeparated as $color => $points) {
-            $blue = $color & 0xff;
-            $green = ($color >> 8) & 0xff;
-            $red = ($color >> 16) & 0xff;
-
-            $sdl_points = $this->sdl->new('SDL_Point[' . count($points) . ']');
-            foreach ($points as $key => [$x, $y]) {
-                $sdl_points[$key]->x = $x;
-                $sdl_points[$key]->y = $y;
+            if (!$points) {
+                continue;
             }
-            $this->sdl->SDL_SetRenderDrawColor($this->renderer, $red, $green, $blue, 158);
+            foreach ($points as $key => $index) {
+                $sdl_points[$key] = $sdl_points_value_cache[$index];
+            }
+
+            $this->sdl->SDL_SetRenderDrawColor(
+                $this->renderer,
+                ($color >> 16) & 0xff,
+                ($color >> 8) & 0xff,
+                $color & 0xff,
+                158
+            );
             $this->sdl->SDL_RenderDrawPoints($this->renderer, $sdl_points, count($points));
         }
         $this->sdl->SDL_RenderPresent($this->renderer);
