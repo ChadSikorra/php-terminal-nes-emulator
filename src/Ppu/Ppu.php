@@ -103,6 +103,10 @@ class Ppu
     public $scrollY;
     /** @var bool */
     public $isHorizontalMirror;
+    /** @var array */
+    private $defaultSpriteBuffer;
+    /** @var array */
+    private $spriteCache = [[]];
 
     public function __construct(PpuBus $bus, Interrupts $interrupts, bool $isHorizontalMirror)
     {
@@ -125,6 +129,7 @@ class Ppu
         $this->scrollX = 0;
         $this->scrollY = 0;
         $this->palette = new Palette();
+        $this->defaultSpriteBuffer = array_fill(0, 8, array_fill(0, 8, 0));
     }
 
     public function vramOffset(): int
@@ -243,7 +248,7 @@ class Ppu
         if (! $this->isHorizontalMirror) {
             return $addr;
         }
-        if ($addr >= 0x0400 and $addr < 0x0800 or $addr >= 0x0C00) {
+        if (($addr >= 0x0400) and ($addr < 0x0800) or ($addr >= 0x0C00)) {
             return $addr - 0x400;
         }
         return $addr;
@@ -299,14 +304,14 @@ class Ppu
         return null;
     }
 
-    public function buildTile(int $tileX, int $tileY, int $offset): Tile
+    public function buildTile(int $tileX, int $tileY, int $offset, array $characterRam): Tile
     {
         // INFO see. http://hp.vector.co.jp/authors/VA042397/nes/ppu.html
         $blockId = $this->getBlockId($tileX, $tileY);
         $spriteId = $this->getSpriteId($tileX, $tileY, $offset);
         $attr = $this->getAttribute($tileX, $tileY, $offset);
         $paletteId = ($attr >> ($blockId * 2)) & 0x03;
-        $sprite = $this->buildSprite($spriteId, $this->backgroundTableOffset());
+        $sprite = $this->buildSprite($spriteId, $this->backgroundTableOffset(), $characterRam);
         return new Tile(
             $sprite,
             $paletteId,
@@ -322,6 +327,7 @@ class Ppu
         // fetched from the attribute table.
         $clampedTileY = $this->tileY() % 30;
         $tableIdOffset = (~~($this->tileY() / 30) % 2) ? 2 : 0;
+        $characterRam = $this->bus->characterRam->ram;
         // background of a line.
         // Build viewport + 1 tile for background scroll.
         for ($x = 0; $x < 32 + 1; $x = ($x + 1) | 0) {
@@ -329,7 +335,7 @@ class Ppu
             $clampedTileX = $tileX % 32;
             $nameTableId = (~~($tileX / 32) % 2) + $tableIdOffset;
             $offsetAddrByNameTable = $nameTableId * 0x400;
-            $tile = $this->buildTile($clampedTileX, $clampedTileY, $offsetAddrByNameTable);
+            $tile = $this->buildTile($clampedTileX, $clampedTileY, $offsetAddrByNameTable, $characterRam);
             $this->background[] = $tile;
         }
     }
@@ -337,6 +343,7 @@ class Ppu
     public function buildSprites()
     {
         $offset = ($this->registers[0] & 0x08) ? 0x1000 : 0x0000;
+        $characterRam = $this->bus->characterRam->ram;
         for ($i = 0; $i < self::SPRITES_NUMBER; $i = ($i + 4) | 0) {
             // INFO: Offset sprite Y position, because First and last 8line is not rendered.
             $y = $this->spriteRam->read($i) - 8;
@@ -346,23 +353,48 @@ class Ppu
             $spriteId = $this->spriteRam->read($i + 1);
             $attr = $this->spriteRam->read($i + 2);
             $x = $this->spriteRam->read($i + 3);
-            $sprite = $this->buildSprite($spriteId, $offset);
+            $sprite = $this->buildSprite($spriteId, $offset, $characterRam);
             $this->sprites[$i / 4] = new SpriteWithAttribute($sprite, $x, $y, $attr, $spriteId);
         }
     }
 
-    public function buildSprite(int $spriteId, int $offset): array
+    const SPRITE_CONSTANT_MAP = [
+        [0x01 << ~~(0 / 8), 0 % 8],
+        [0x01 << ~~(1 / 8), 1 % 8],
+        [0x01 << ~~(2 / 8), 2 % 8],
+        [0x01 << ~~(3 / 8), 3 % 8],
+        [0x01 << ~~(4 / 8), 4 % 8],
+        [0x01 << ~~(5 / 8), 5 % 8],
+        [0x01 << ~~(6 / 8), 6 % 8],
+        [0x01 << ~~(7 / 8), 7 % 8],
+        [0x01 << ~~(8 / 8), 8 % 8],
+        [0x01 << ~~(9 / 8), 9 % 8],
+        [0x01 << ~~(10 / 8), 10 % 8],
+        [0x01 << ~~(11 / 8), 11 % 8],
+        [0x01 << ~~(12 / 8), 12 % 8],
+        [0x01 << ~~(13 / 8), 13 % 8],
+        [0x01 << ~~(14 / 8), 14 % 8],
+        [0x01 << ~~(15 / 8), 15 % 8],
+    ];
+
+    public function buildSprite(int $spriteId, int $offset, array $characterRam): array
     {
-        $sprite = array_fill(0, 8, array_fill(0, 8, 0));
-        for ($i = 0; $i < 16; $i = ($i + 1) | 0) {
-            for ($j = 0; $j < 8; $j = ($j + 1) | 0) {
-                $addr = $spriteId * 16 + $i + $offset;
-                $ram = $this->readCharacterRAM($addr);
+        if (isset($this->spriteCache[$spriteId][$offset])) {
+            return $this->spriteCache[$spriteId][$offset];
+        }
+        $spriteAddressBase = $spriteId * 16 + $offset;
+
+        $sprite = $this->defaultSpriteBuffer;
+        for ($i = 0; $i < 16; $i++) {
+            $ram = $characterRam[$spriteAddressBase + $i];
+            list($addend, $spriteOffsetBase) = self::SPRITE_CONSTANT_MAP[$i];
+            for ($j = 0; $j < 8; $j++) {
                 if ($ram & (0x80 >> $j)) {
-                    $sprite[$i % 8][$j] += 0x01 << ~~($i / 8);
+                    $sprite[$spriteOffsetBase][$j] += $addend;
                 }
             }
         }
+        $this->spriteCache[$spriteId][$offset] = $sprite;
         return $sprite;
     }
 
@@ -373,6 +405,12 @@ class Ppu
 
     public function writeCharacterRAM(int $addr, int $data)
     {
+        if ($addr >= 0x1000) {
+            $offset = 0x1000;
+        } else {
+            $offset = 0;
+        }
+        unset($this->spriteCache[(int)(($addr - $offset) / 16)][$offset]);
         $this->bus->writeByPpu($addr, $data);
     }
 

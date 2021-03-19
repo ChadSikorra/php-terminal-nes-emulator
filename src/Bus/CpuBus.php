@@ -12,6 +12,7 @@ class CpuBus
     public $ppu;
     public $keypad;
     public $dma;
+    private $use_mirror = false;
 
     public function __construct(Ram $ram, Rom $programRom, Ppu $ppu, Keypad $keypad, Dma $dma)
     {
@@ -20,11 +21,21 @@ class CpuBus
         $this->ppu = $ppu;
         $this->keypad = $keypad;
         $this->dma = $dma;
+        $this->use_mirror = $this->programRom->size() <= 0x4000;
     }
 
     public function readByCpu($addr): int
     {
-        if ($addr < 0x0800) {
+        if ($addr >= 0xC000) {
+            // Mirror, if prom block number equals 1
+            if ($this->use_mirror) {
+                return $this->programRom->read($addr - 0xC000);
+            }
+            return $this->programRom->read($addr - 0x8000);
+        } elseif ($addr >= 0x8000) {
+            // ROM
+            return $this->programRom->read($addr - 0x8000);
+        } elseif ($addr < 0x0800) {
             return $this->ram->read($addr);
         } elseif ($addr < 0x2000) {
             // mirror
@@ -36,15 +47,6 @@ class CpuBus
         } elseif ($addr === 0x4016) {
             // TODO Add 2P
             return $this->keypad->read();
-        } elseif ($addr >= 0xC000) {
-            // Mirror, if prom block number equals 1
-            if ($this->programRom->size() <= 0x4000) {
-                return $this->programRom->read($addr - 0xC000);
-            }
-            return $this->programRom->read($addr - 0x8000);
-        } elseif ($addr >= 0x8000) {
-            // ROM
-            return $this->programRom->read($addr - 0x8000);
         }
         return false;
     }
