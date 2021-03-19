@@ -2,3 +2,4 @@
 /.idea
 /vendor
 /screen
+composer.lock
