@@ -88,18 +88,20 @@ class Renderer
             ++$this->framesInSecond;
         }
 
-        if ($data->background or $data->sprites) {
+        if ($data->background || $data->sprites) {
             $paletteColorsMap = [];
             $colors = self::COLORS;
+
             foreach ($data->palette as $key => $colorIndex) {
                 $paletteColorsMap[$key] = $colors[$colorIndex];
             }
-        }
-        if ($data->background) {
-            $this->renderBackground($data->background, $paletteColorsMap);
-        }
-        if ($data->sprites) {
-            $this->renderSprites($data->sprites, $paletteColorsMap);
+
+            if ($data->background) {
+                $this->renderBackground($data->background, $paletteColorsMap);
+            }
+            if ($data->sprites) {
+                $this->renderSprites($data->sprites, $paletteColorsMap);
+            }
         }
 
         if ($this->framesInSecond < 61) {
