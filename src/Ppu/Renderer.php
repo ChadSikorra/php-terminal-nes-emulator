@@ -74,7 +74,7 @@ class Renderer
         }
 
         // NOTE: If background pixel is not transparent, we need to hide sprite.
-        return !(($sprite[$y % 8] && $sprite[$y % 8][$x % 8] % 4) === 0);
+        return !(($sprite[$y % 8] && $sprite[$y % 8][$x % 8] % 4) === false);
     }
 
     public function render(RenderingData $data)
