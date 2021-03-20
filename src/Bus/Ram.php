@@ -2,6 +2,8 @@
 
 namespace Nes\Bus;
 
+use function array_fill;
+
 class Ram
 {
     /**

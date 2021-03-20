@@ -109,7 +109,7 @@ class Renderer
 
     /**
      * @param Tile[] $background
-     * @param int[] $paletteColorsMap
+     * @param int[]  $paletteColorsMap
      */
     public function renderBackground(array $background, array $paletteColorsMap): void
     {
@@ -124,7 +124,7 @@ class Renderer
 
     /**
      * @param SpriteWithAttribute[] $sprites
-     * @param int[] $paletteColorsMap
+     * @param int[]                 $paletteColorsMap
      */
     public function renderSprites(array $sprites, array $paletteColorsMap): void
     {

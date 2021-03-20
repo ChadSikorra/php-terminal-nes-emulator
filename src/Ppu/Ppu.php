@@ -5,6 +5,7 @@ namespace Nes\Ppu;
 use Nes\Bus\PpuBus;
 use Nes\Bus\Ram;
 use Nes\Cpu\Interrupts;
+use function array_fill;
 
 class Ppu
 {
@@ -404,6 +405,7 @@ class Ppu
 
     /**
      * @param int[] $characterRam
+     *
      * @return array<int[]>
      */
     public function buildSprite(int $spriteId, int $offset, array $characterRam): array

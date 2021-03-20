@@ -2,6 +2,12 @@
 
 namespace Nes\Bus;
 
+use function exec;
+use function fopen;
+use function fread;
+use function array_fill;
+use function stream_set_blocking;
+
 class Keypad
 {
     /**

@@ -47,6 +47,7 @@ class Cpu
 
     /**
      * @throws Exception
+     *
      * @return int[]
      */
     public function getAddrOrDataWithAdditionalCycle(int $mode): array

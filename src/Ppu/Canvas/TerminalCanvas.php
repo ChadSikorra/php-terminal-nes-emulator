@@ -20,7 +20,7 @@ class TerminalCanvas implements CanvasInterface
     protected int $width = 0;
 
     /**
-     * Braille Pixel Matrix
+     * Braille Pixel Matrix.
      *
      *   ,___,
      *   |1 4|
@@ -114,7 +114,7 @@ class TerminalCanvas implements CanvasInterface
     }
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function draw(array $frameBuffer, int $fps, int $fis): void
     {

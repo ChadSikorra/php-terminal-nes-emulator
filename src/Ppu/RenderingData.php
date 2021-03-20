@@ -20,7 +20,7 @@ class RenderingData
     public array $sprites;
 
     /**
-     * @param int[]     $palette
+     * @param int[]                 $palette
      * @param Tile[]                $background
      * @param SpriteWithAttribute[] $sprites
      */

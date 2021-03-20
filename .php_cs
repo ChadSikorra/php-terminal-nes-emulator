@@ -36,7 +36,11 @@ return PhpCsFixer\Config::create()
         'visibility_required' => ['elements' => ['property', 'method']],
         'phpdoc_line_span' => true,
         'fully_qualified_strict_types' => true,
-        'global_namespace_import' => ['import_classes' => true, 'import_constants' => true, 'import_functions' => true],
+        'global_namespace_import' => [
+            'import_classes' => true,
+            'import_constants' => true,
+            'import_functions' => true
+        ],
     ])
     ->setFinder($finder)
 ;
