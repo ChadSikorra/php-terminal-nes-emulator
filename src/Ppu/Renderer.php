@@ -1,26 +1,12 @@
 <?php
+
 namespace Nes\Ppu;
 
 use Nes\Ppu\Canvas\CanvasInterface;
 
 class Renderer
 {
-    /** @var array */
-    public $frameBuffer = [];
-    /** @var \Nes\Ppu\Tile[] */
-    public $background;
-    /** @var int */
-    public $serial = 0;
-    /** @var \Nes\Ppu\Canvas\CanvasInterface */
-    public $canvas;
-
-    protected $currentSecond = 0;
-
-    protected $framesInSecond = 0;
-
-    protected $fps = 0;
-
-    const COLORS = [
+    public const COLORS = [
         0x808080, 0x003DA6, 0x0012B0, 0x440096,
         0xA1005E, 0xC70028, 0xBA0600, 0x8C1700,
         0x5C2F00, 0x104500, 0x054A00, 0x00472E,
@@ -39,6 +25,32 @@ class Renderer
         0x99FFFC, 0xDDDDDD, 0x111111, 0x111111,
     ];
 
+    /**
+     * @var array
+     */
+    public $frameBuffer = [];
+
+    /**
+     * @var \Nes\Ppu\Tile[]
+     */
+    public $background;
+
+    /**
+     * @var int
+     */
+    public $serial = 0;
+
+    /**
+     * @var \Nes\Ppu\Canvas\CanvasInterface
+     */
+    public $canvas;
+
+    protected $currentSecond = 0;
+
+    protected $framesInSecond = 0;
+
+    protected $fps = 0;
+
     public function __construct(CanvasInterface $canvas)
     {
         // 256 x 240
@@ -49,8 +61,8 @@ class Renderer
 
     public function shouldPixelHide(int $x, int $y): bool
     {
-        $tileX = (int)($x / 8);
-        $tileY = (int)($y / 8);
+        $tileX = (int) ($x / 8);
+        $tileY = (int) ($y / 8);
         $backgroundIndex = $tileY * 33 + $tileX;
 
         $sprite = null;
@@ -105,7 +117,7 @@ class Renderer
         $this->background = $background;
         for ($i = 0; $i < $count_background; ++$i) {
             $x = ($i % 33) * 8;
-            $y = (int)($i / 33) * 8;
+            $y = (int) ($i / 33) * 8;
             $this->renderTile($background[$i], $x, $y, $paletteColorsMap);
         }
     }
@@ -165,9 +177,9 @@ class Renderer
 
     public function renderSprite(SpriteWithAttribute $sprite, array $paletteColorsMap)
     {
-        $isVerticalReverse = (bool)($sprite->attribute & 0x80);
-        $isHorizontalReverse = (bool)($sprite->attribute & 0x40);
-        $isLowPriority = (bool)($sprite->attribute & 0x20);
+        $isVerticalReverse = (bool) ($sprite->attribute & 0x80);
+        $isHorizontalReverse = (bool) ($sprite->attribute & 0x40);
+        $isLowPriority = (bool) ($sprite->attribute & 0x20);
         $paletteId = $sprite->attribute & 0x03;
         $paletteIndexBase = $paletteId * 4 + 0x10;
         for ($i = 0; $i < 8; $i = ($i + 1) | 0) {

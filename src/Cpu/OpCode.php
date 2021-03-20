@@ -1,77 +1,144 @@
 <?php
+
 namespace Nes\Cpu;
 
 class OpCode
 {
-    public static $cycles;
-    public static $m;
+    public const BASE_LDA = 1;
 
-    const BASE_LDA = 1;
-    const BASE_LDX = 2;
-    const BASE_LDY = 3;
-    const BASE_STA = 4;
-    const BASE_STX = 5;
-    const BASE_STY = 6;
-    const BASE_TXA = 7;
-    const BASE_TYA = 8;
-    const BASE_TXS = 9;
-    const BASE_TAY = 10;
-    const BASE_TAX = 11;
-    const BASE_TSX = 12;
-    const BASE_PHP = 13;
-    const BASE_PLP = 14;
-    const BASE_PHA = 15;
-    const BASE_PLA = 16;
-    const BASE_ADC = 17;
-    const BASE_SBC = 18;
-    const BASE_CPX = 19;
-    const BASE_CPY = 20;
-    const BASE_CMP = 21;
-    const BASE_AND = 22;
-    const BASE_EOR = 23;
-    const BASE_ORA = 24;
-    const BASE_BIT = 25;
-    const BASE_ASL = 26;
-    const BASE_LSR = 27;
-    const BASE_ROL = 28;
-    const BASE_ROR = 29;
-    const BASE_INX = 30;
-    const BASE_INY = 31;
-    const BASE_INC = 32;
-    const BASE_DEX = 33;
-    const BASE_DEY = 34;
-    const BASE_DEC = 35;
-    const BASE_CLC = 36;
-    const BASE_CLI = 37;
-    const BASE_CLV = 38;
-    const BASE_SEC = 39;
-    const BASE_SEI = 40;
-    const BASE_NOP = 41;
-    const BASE_BRK = 42;
-    const BASE_JSR = 43;
-    const BASE_JMP = 44;
-    const BASE_RTI = 45;
-    const BASE_RTS = 46;
-    const BASE_BPL = 47;
-    const BASE_BMI = 48;
-    const BASE_BVC = 49;
-    const BASE_BVS = 50;
-    const BASE_BCC = 51;
-    const BASE_BCS = 52;
-    const BASE_BNE = 53;
-    const BASE_BEQ = 54;
-    const BASE_SED = 55;
-    const BASE_CLD = 56;
-    const BASE_NOPD = 57;
-    const BASE_NOPI = 58;
-    const BASE_LAX = 59;
-    const BASE_SAX = 60;
-    const BASE_DCP = 61;
-    const BASE_ISB = 62;
-    const BASE_SLO = 63;
-    const BASE_RLA = 64;
-    const BASE_SRE = 65;
-    const BASE_RRA = 66;
+    public const BASE_LDX = 2;
+
+    public const BASE_LDY = 3;
+
+    public const BASE_STA = 4;
+
+    public const BASE_STX = 5;
+
+    public const BASE_STY = 6;
+
+    public const BASE_TXA = 7;
+
+    public const BASE_TYA = 8;
+
+    public const BASE_TXS = 9;
+
+    public const BASE_TAY = 10;
+
+    public const BASE_TAX = 11;
+
+    public const BASE_TSX = 12;
+
+    public const BASE_PHP = 13;
+
+    public const BASE_PLP = 14;
+
+    public const BASE_PHA = 15;
+
+    public const BASE_PLA = 16;
+
+    public const BASE_ADC = 17;
+
+    public const BASE_SBC = 18;
+
+    public const BASE_CPX = 19;
+
+    public const BASE_CPY = 20;
+
+    public const BASE_CMP = 21;
+
+    public const BASE_AND = 22;
+
+    public const BASE_EOR = 23;
+
+    public const BASE_ORA = 24;
+
+    public const BASE_BIT = 25;
+
+    public const BASE_ASL = 26;
+
+    public const BASE_LSR = 27;
+
+    public const BASE_ROL = 28;
+
+    public const BASE_ROR = 29;
+
+    public const BASE_INX = 30;
+
+    public const BASE_INY = 31;
+
+    public const BASE_INC = 32;
+
+    public const BASE_DEX = 33;
+
+    public const BASE_DEY = 34;
+
+    public const BASE_DEC = 35;
+
+    public const BASE_CLC = 36;
+
+    public const BASE_CLI = 37;
+
+    public const BASE_CLV = 38;
+
+    public const BASE_SEC = 39;
+
+    public const BASE_SEI = 40;
+
+    public const BASE_NOP = 41;
+
+    public const BASE_BRK = 42;
+
+    public const BASE_JSR = 43;
+
+    public const BASE_JMP = 44;
+
+    public const BASE_RTI = 45;
+
+    public const BASE_RTS = 46;
+
+    public const BASE_BPL = 47;
+
+    public const BASE_BMI = 48;
+
+    public const BASE_BVC = 49;
+
+    public const BASE_BVS = 50;
+
+    public const BASE_BCC = 51;
+
+    public const BASE_BCS = 52;
+
+    public const BASE_BNE = 53;
+
+    public const BASE_BEQ = 54;
+
+    public const BASE_SED = 55;
+
+    public const BASE_CLD = 56;
+
+    public const BASE_NOPD = 57;
+
+    public const BASE_NOPI = 58;
+
+    public const BASE_LAX = 59;
+
+    public const BASE_SAX = 60;
+
+    public const BASE_DCP = 61;
+
+    public const BASE_ISB = 62;
+
+    public const BASE_SLO = 63;
+
+    public const BASE_RLA = 64;
+
+    public const BASE_SRE = 65;
+
+    public const BASE_RRA = 66;
+
+    public static $cycles;
+
+    public static $m;
 
     public static function getOpCodes()
     {

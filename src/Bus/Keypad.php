@@ -1,19 +1,37 @@
 <?php
+
 namespace Nes\Bus;
 
 class Keypad
 {
-    /** @var bool|resource */
+    /**
+     * @var bool|resource
+     */
     public $file;
-    /** @var string */
+
+    /**
+     * @var string
+     */
     public $keyPressing;
-    /** @var bool[] */
+
+    /**
+     * @var bool[]
+     */
     public $keyBuffer;
-    /** @var bool[] */
+
+    /**
+     * @var bool[]
+     */
     public $keyRegistors;
-    /** @var bool */
+
+    /**
+     * @var bool
+     */
     public $isSet;
-    /** @var int */
+
+    /**
+     * @var int
+     */
     public $index;
 
     public function __construct()
@@ -29,9 +47,9 @@ class Keypad
     {
         $key = fread($this->file, 1);
 
-        if (! empty($key)) {
+        if (!empty($key)) {
             $this->keyDown($key);
-        } elseif (! empty($this->keyPressing)) {
+        } elseif (!empty($this->keyPressing)) {
             $this->keyUp($this->keyPressing);
         }
 
@@ -60,9 +78,10 @@ class Keypad
         // A, B, SELECT, START, ↑, ↓, ←, →
         $keyIndex = array_search($key, ['.', ',', 'n', 'm', 'w', 's', 'a', 'd']);
 
-        if ($keyIndex === false) {
+        if (false === $keyIndex) {
             return -1;
         }
+
         return $keyIndex;
     }
 

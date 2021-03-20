@@ -1,13 +1,22 @@
 <?php
+
 namespace Nes\NesFile;
 
 class NesRom
 {
-    /** @var bool */
+    /**
+     * @var bool
+     */
     public $isHorizontalMirror;
-    /** @var int[] */
+
+    /**
+     * @var int[]
+     */
     public $programRom;
-    /** @var int[] */
+
+    /**
+     * @var int[]
+     */
     public $characterRom;
 
     public function __construct(bool $isHorizontalMirror, array $programRom, array $characterRom)

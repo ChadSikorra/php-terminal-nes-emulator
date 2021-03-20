@@ -1,17 +1,25 @@
 <?php
+
 namespace Nes\Cpu\Registers;
 
 class Status
 {
     public $negative;
+
     public $overflow;
+
     public $reserved;
+
     public $break_mode;
+
     public $decimal_mode;
+
     public $interrupt;
+
     public $zero;
+
     public $carry;
-    
+
     public function __construct(
         bool $negative,
         bool $overflow,

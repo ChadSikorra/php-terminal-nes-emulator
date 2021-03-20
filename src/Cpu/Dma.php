@@ -1,4 +1,5 @@
 <?php
+
 namespace Nes\Cpu;
 
 use Nes\Bus\Ram;
@@ -7,10 +8,15 @@ use Nes\Ppu\Ppu;
 class Dma
 {
     public $isProcessing;
+
     public $ramAddr;
+
     public $ram;
+
     public $ppu;
+
     public $addr;
+
     public $cycle;
 
     public function __construct(Ram $ram, Ppu $ppu)
@@ -29,7 +35,7 @@ class Dma
 
     public function runDma()
     {
-        if (! $this->isProcessing) {
+        if (!$this->isProcessing) {
             return;
         }
         for ($i = 0; $i < 0x100; $i = ($i + 1) | 0) {

@@ -1,4 +1,5 @@
 <?php
+
 namespace Nes\Ppu\Canvas;
 
 interface CanvasInterface

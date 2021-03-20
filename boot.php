@@ -1,5 +1,8 @@
 <?php
-require_once "vendor/autoload.php";
+
+use Nes\Nes;
+
+require_once 'vendor/autoload.php';
 
 $c = new Console_CommandLine();
 $c->description = 'php-terminal-nes-emulator';
@@ -18,26 +21,28 @@ $c->addOption('canvas', [
 
 $filename = null;
 $canvas = null;
+
 try {
     $parsed = $c->parse();
 
-    if (! isset($parsed->args['file'])) {
+    if (!isset($parsed->args['file'])) {
         throw new \RuntimeException('You need to pass the ROM file name.');
     }
     $filename = $parsed->args['file'];
     if (isset($parsed->options['canvas'])) {
         $canvasName = ucfirst(strtolower($parsed->options['canvas']));
         $canvasClassName = sprintf('\\Nes\\Ppu\\Canvas\\%sCanvas', $canvasName);
-        if (! class_exists($canvasClassName)) {
+        if (!class_exists($canvasClassName)) {
             throw new \RuntimeException('Invalid canvas.');
         }
         $canvas = new $canvasClassName();
     }
 } catch (Exception $e) {
-    die($e->getMessage().PHP_EOL);
+    exit($e->getMessage().PHP_EOL);
 }
 
-$nes = new \Nes\Nes($canvas);
+$nes = new Nes($canvas);
+
 try {
     $nes->load($filename);
 } catch (Exception $e) {

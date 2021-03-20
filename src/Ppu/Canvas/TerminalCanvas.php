@@ -1,13 +1,19 @@
 <?php
+
 namespace Nes\Ppu\Canvas;
 
 use Nes\Ppu\Renderer;
 
 class TerminalCanvas implements CanvasInterface
 {
+    public $threshold = 127;
+
     protected $height = 0;
+
     protected $lastFrame;
+
     protected $lastFrameCanvasBuffer;
+
     /**
      * Braille Pixel Matrix
      *   ,___,
@@ -15,49 +21,57 @@ class TerminalCanvas implements CanvasInterface
      *   |2 5|
      *   |3 6|
      *   |7 8|
-     *   `````
+     *   `````.
+     *
      * @var array
      */
     protected $width = 0;
 
-    public $threshold = 127;
     private $brailleMap = [];
+
     private $pixelAvgCache0 = [];
+
     private $pixelAvgCache1 = [];
+
     private $pixelAvgCache2 = [];
+
     private $pixelAvgCache3 = [];
+
     private $pixelAvgCache4 = [];
+
     private $pixelAvgCache5 = [];
+
     private $pixelAvgCache6 = [];
+
     private $pixelAvgCache7 = [];
 
     public function __construct()
     {
         $this->brailleMap = [];
-        for ($i = 0; $i <= 0xff; $i++) {
-            $this->brailleMap[$i] = html_entity_decode('&#' . (0x2800 | $i) . ';', ENT_NOQUOTES, 'UTF-8');
+        for ($i = 0; $i <= 0xff; ++$i) {
+            $this->brailleMap[$i] = html_entity_decode('&#'.(0x2800 | $i).';', ENT_NOQUOTES, 'UTF-8');
         }
 
         $pixelAverages = [];
         foreach (Renderer::COLORS as $color) {
             $pixelAverages[$color] = (
-                    ($color & 0xff) +
+                ($color & 0xff) +
                     (($color >> 8) & 0xff) +
                     (($color >> 16))
-                ) / 3;
+            ) / 3;
         }
 
         $pixelMap0 = [
             0x01,
             0x02,
             0x04,
-            0x40
+            0x40,
         ];
         $pixelMap1 = [
             0x08,
             0x10,
             0x20,
-            0x80
+            0x80,
         ];
         foreach ($pixelAverages as $color => $avg) {
             $this->pixelAvgCache0[$color] = $avg > $this->threshold ? $pixelMap0[0] : 0;
@@ -135,7 +149,7 @@ class TerminalCanvas implements CanvasInterface
                 $content = "\e[{$this->height}A\e[{$this->width}D";
             }
 
-            $content .= sprintf('FPS: %3d - Frame Skip: %3d' . PHP_EOL, $fps, $fis) . $frame;
+            $content .= sprintf('FPS: %3d - Frame Skip: %3d'.PHP_EOL, $fps, $fis).$frame;
             echo $content;
 
             $this->height = $charHeight + 1;

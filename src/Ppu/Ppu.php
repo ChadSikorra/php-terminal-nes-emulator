@@ -1,4 +1,5 @@
 <?php
+
 namespace Nes\Ppu;
 
 use Nes\Bus\PpuBus;
@@ -7,7 +8,26 @@ use Nes\Cpu\Interrupts;
 
 class Ppu
 {
-    const SPRITES_NUMBER = 0x100;
+    public const SPRITES_NUMBER = 0x100;
+
+    public const SPRITE_CONSTANT_MAP = [
+        [0x01 << ~~(0 / 8), 0 % 8],
+        [0x01 << ~~(1 / 8), 1 % 8],
+        [0x01 << ~~(2 / 8), 2 % 8],
+        [0x01 << ~~(3 / 8), 3 % 8],
+        [0x01 << ~~(4 / 8), 4 % 8],
+        [0x01 << ~~(5 / 8), 5 % 8],
+        [0x01 << ~~(6 / 8), 6 % 8],
+        [0x01 << ~~(7 / 8), 7 % 8],
+        [0x01 << ~~(8 / 8), 8 % 8],
+        [0x01 << ~~(9 / 8), 9 % 8],
+        [0x01 << ~~(10 / 8), 10 % 8],
+        [0x01 << ~~(11 / 8), 11 % 8],
+        [0x01 << ~~(12 / 8), 12 % 8],
+        [0x01 << ~~(13 / 8), 13 % 8],
+        [0x01 << ~~(14 / 8), 14 % 8],
+        [0x01 << ~~(15 / 8), 15 % 8],
+    ];
 
     // PPU power up state
     // see. https://wiki.nesdev.com/w/index.php/PPU_power_up_state
@@ -65,47 +85,109 @@ class Ppu
     |  0   | Display type      0: color, 1: mono         |
     */
 
-    /** @var int[] */
+    /**
+     * @var int[]
+     */
     public $registers;
-    /** @var int */
+
+    /**
+     * @var int
+     */
     public $cycle;
-    /** @var int */
+
+    /**
+     * @var int
+     */
     public $line;
-    /** @var bool */
+
+    /**
+     * @var bool
+     */
     public $isValidVramAddr;
-    /** @var bool */
+
+    /**
+     * @var bool
+     */
     public $isLowerVramAddr;
-    /** @var int */
+
+    /**
+     * @var int
+     */
     public $spriteRamAddr;
-    /** @var int */
+
+    /**
+     * @var int
+     */
     public $vramAddr;
-    /** @var \Nes\Bus\Ram */
+
+    /**
+     * @var \Nes\Bus\Ram
+     */
     public $vram;
-    /** @var int */
+
+    /**
+     * @var int
+     */
     public $vramReadBuf;
-    /** @var \Nes\Bus\Ram */
+
+    /**
+     * @var \Nes\Bus\Ram
+     */
     public $spriteRam;
-    /** @var \Nes\Bus\PpuBus */
+
+    /**
+     * @var \Nes\Bus\PpuBus
+     */
     public $bus;
-    /** @var \Nes\Ppu\Tile[] */
+
+    /**
+     * @var \Nes\Ppu\Tile[]
+     */
     public $background;
-    /** @var \Nes\Ppu\SpriteWithAttribute[] */
+
+    /**
+     * @var \Nes\Ppu\SpriteWithAttribute[]
+     */
     public $sprites;
-    /** @var \Nes\Ppu\Palette */
+
+    /**
+     * @var \Nes\Ppu\Palette
+     */
     public $palette;
-    /** @var \Nes\Cpu\Interrupts */
+
+    /**
+     * @var \Nes\Cpu\Interrupts
+     */
     public $interrupts;
-    /** @var bool */
+
+    /**
+     * @var bool
+     */
     public $isHorizontalScroll;
-    /** @var int */
+
+    /**
+     * @var int
+     */
     public $scrollX;
-    /** @var int */
+
+    /**
+     * @var int
+     */
     public $scrollY;
-    /** @var bool */
+
+    /**
+     * @var bool
+     */
     public $isHorizontalMirror;
-    /** @var array */
+
+    /**
+     * @var array
+     */
     private $defaultSpriteBuffer;
-    /** @var array */
+
+    /**
+     * @var array
+     */
     private $spriteCache = [[]];
 
     public function __construct(PpuBus $bus, Interrupts $interrupts, bool $isHorizontalMirror)
@@ -134,7 +216,7 @@ class Ppu
 
     public function vramOffset(): int
     {
-        return ($this->registers[0x00] & 0x04)? 32: 1;
+        return ($this->registers[0x00] & 0x04) ? 32 : 1;
     }
 
     public function nameTableId(): int
@@ -160,22 +242,23 @@ class Ppu
     public function hasSpriteHit(): bool
     {
         $y = $this->spriteRam->read(0);
+
         return ($y === $this->line) and $this->isBackgroundEnable() and $this->isSpriteEnable();
     }
 
     public function hasVblankIrqEnabled(): bool
     {
-        return !!($this->registers[0] & 0x80);
+        return (bool) ($this->registers[0] & 0x80);
     }
 
     public function isBackgroundEnable(): bool
     {
-        return !!($this->registers[0x01] & 0x08);
+        return (bool) ($this->registers[0x01] & 0x08);
     }
 
     public function isSpriteEnable(): bool
     {
-        return !!($this->registers[0x01] & 0x10);
+        return (bool) ($this->registers[0x01] & 0x10);
     }
 
     public function scrollTileX(): int
@@ -217,7 +300,7 @@ class Ppu
 
     public function isVblank(): bool
     {
-        return !!($this->registers[0x02] & 0x80);
+        return (bool) ($this->registers[0x02] & 0x80);
     }
 
     public function clearVblank()
@@ -233,6 +316,7 @@ class Ppu
     public function getAttribute(int $tileX, int $tileY, int $offset): int
     {
         $addr = ~~($tileX / 4) + (~~($tileY / 4) * 8) + 0x03C0 + $offset;
+
         return $this->vram->read($this->mirrorDownSpriteAddr($addr));
     }
 
@@ -240,17 +324,19 @@ class Ppu
     {
         $tileNumber = $tileY * 32 + $tileX;
         $spriteAddr = $this->mirrorDownSpriteAddr($tileNumber + $offset);
+
         return $this->vram->read($spriteAddr);
     }
 
     public function mirrorDownSpriteAddr(int $addr): int
     {
-        if (! $this->isHorizontalMirror) {
+        if (!$this->isHorizontalMirror) {
             return $addr;
         }
         if (($addr >= 0x0400) and ($addr < 0x0800) or ($addr >= 0x0C00)) {
             return $addr - 0x400;
         }
+
         return $addr;
     }
 
@@ -258,42 +344,42 @@ class Ppu
     // While drawing the BG and sprite at the first 256 clocks,
     // it searches for sprites to be drawn on the next scan line.
     // Get the pattern of the sprite searched with the remaining clock.
+
     /**
-     * @param int $cycle
-     *
-     * @return \Nes\Ppu\RenderingData|null
+     * @return null|\Nes\Ppu\RenderingData
      */
     public function run(int $cycle)
     {
         $this->cycle += $cycle;
-        if ($this->line === 0) {
+        if (0 === $this->line) {
             $this->background = [];
             $this->buildSprites();
         }
 
         if ($this->cycle >= 341) {
             $this->cycle -= 341;
-            $this->line++;
+            ++$this->line;
 
             if ($this->hasSpriteHit()) {
                 $this->setSpriteHit();
             }
 
-            if ($this->line <= 240 && $this->line % 8 === 0 && $this->scrollY <= 240) {
+            if ($this->line <= 240 && 0 === $this->line % 8 && $this->scrollY <= 240) {
                 $this->buildBackground();
             }
-            if ($this->line === 241) {
+            if (241 === $this->line) {
                 $this->setVblank();
                 if ($this->hasVblankIrqEnabled()) {
                     $this->interrupts->assertNmi();
                 }
             }
 
-            if ($this->line === 262) {
+            if (262 === $this->line) {
                 $this->clearVblank();
                 $this->clearSpriteHit();
                 $this->line = 0;
                 $this->interrupts->deassertNmi();
+
                 return new RenderingData(
                     $this->getPalette(),
                     $this->isBackgroundEnable() ? $this->background : null,
@@ -301,6 +387,7 @@ class Ppu
                 );
             }
         }
+
         return null;
     }
 
@@ -312,6 +399,7 @@ class Ppu
         $attr = $this->getAttribute($tileX, $tileY, $offset);
         $paletteId = ($attr >> ($blockId * 2)) & 0x03;
         $sprite = $this->buildSprite($spriteId, $this->backgroundTableOffset(), $characterRam);
+
         return new Tile(
             $sprite,
             $paletteId,
@@ -358,25 +446,6 @@ class Ppu
         }
     }
 
-    const SPRITE_CONSTANT_MAP = [
-        [0x01 << ~~(0 / 8), 0 % 8],
-        [0x01 << ~~(1 / 8), 1 % 8],
-        [0x01 << ~~(2 / 8), 2 % 8],
-        [0x01 << ~~(3 / 8), 3 % 8],
-        [0x01 << ~~(4 / 8), 4 % 8],
-        [0x01 << ~~(5 / 8), 5 % 8],
-        [0x01 << ~~(6 / 8), 6 % 8],
-        [0x01 << ~~(7 / 8), 7 % 8],
-        [0x01 << ~~(8 / 8), 8 % 8],
-        [0x01 << ~~(9 / 8), 9 % 8],
-        [0x01 << ~~(10 / 8), 10 % 8],
-        [0x01 << ~~(11 / 8), 11 % 8],
-        [0x01 << ~~(12 / 8), 12 % 8],
-        [0x01 << ~~(13 / 8), 13 % 8],
-        [0x01 << ~~(14 / 8), 14 % 8],
-        [0x01 << ~~(15 / 8), 15 % 8],
-    ];
-
     public function buildSprite(int $spriteId, int $offset, array $characterRam): array
     {
         if (isset($this->spriteCache[$spriteId][$offset])) {
@@ -385,16 +454,17 @@ class Ppu
         $spriteAddressBase = $spriteId * 16 + $offset;
 
         $sprite = $this->defaultSpriteBuffer;
-        for ($i = 0; $i < 16; $i++) {
+        for ($i = 0; $i < 16; ++$i) {
             $ram = $characterRam[$spriteAddressBase + $i];
             list($addend, $spriteOffsetBase) = self::SPRITE_CONSTANT_MAP[$i];
-            for ($j = 0; $j < 8; $j++) {
+            for ($j = 0; $j < 8; ++$j) {
                 if ($ram & (0x80 >> $j)) {
                     $sprite[$spriteOffsetBase][$j] += $addend;
                 }
             }
         }
         $this->spriteCache[$spriteId][$offset] = $sprite;
+
         return $sprite;
     }
 
@@ -410,7 +480,7 @@ class Ppu
         } else {
             $offset = 0;
         }
-        unset($this->spriteCache[(int)(($addr - $offset) / 16)][$offset]);
+        unset($this->spriteCache[(int) (($addr - $offset) / 16)][$offset]);
         $this->bus->writeByPpu($addr, $data);
     }
 
@@ -428,6 +498,7 @@ class Ppu
             $this->vramReadBuf = $this->readCharacterRAM($this->vramAddr);
             $this->vramAddr += $this->vramOffset();
         }
+
         return $buf;
     }
 
@@ -442,7 +513,7 @@ class Ppu
         | 4-0  | invalid                                     |
         |      | bit4 VRAM write flag [0: success, 1: fail]  |
         */
-        if ($addr === 0x0002) {
+        if (0x0002 === $addr) {
             $this->isHorizontalScroll = true;
             $data = $this->registers[0x02];
             $this->clearVblank();
@@ -451,30 +522,31 @@ class Ppu
         }
         // Write OAM data here. Writes will increment OAMADDR after the write
         // reads during vertical or forced blanking return the value from OAM at that address but do not increment.
-        if ($addr === 0x0004) {
+        if (0x0004 === $addr) {
             return $this->spriteRam->read($this->spriteRamAddr);
         }
-        if ($addr === 0x0007) {
+        if (0x0007 === $addr) {
             return $this->readVram();
         }
+
         return 0;
     }
 
     public function write(int $addr, int $data)
     {
-        if ($addr === 0x0003) {
+        if (0x0003 === $addr) {
             $this->writeSpriteRamAddr($data);
         }
-        if ($addr === 0x0004) {
+        if (0x0004 === $addr) {
             $this->writeSpriteRamData($data);
         }
-        if ($addr === 0x0005) {
+        if (0x0005 === $addr) {
             $this->writeScrollData($data);
         }
-        if ($addr === 0x0006) {
+        if (0x0006 === $addr) {
             $this->writeVramAddr($data);
         }
-        if ($addr === 0x0007) {
+        if (0x0007 === $addr) {
             $this->writeVramData($data);
         }
         $this->registers[$addr] = $data;
@@ -488,7 +560,7 @@ class Ppu
     public function writeSpriteRamData(int $data)
     {
         $this->spriteRam->write($this->spriteRamAddr, $data);
-        $this->spriteRamAddr += 1;
+        ++$this->spriteRamAddr;
     }
 
     public function writeScrollData($data)

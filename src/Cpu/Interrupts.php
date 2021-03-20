@@ -1,11 +1,17 @@
 <?php
+
 namespace Nes\Cpu;
 
 class Interrupts
 {
-    /** @var bool */
+    /**
+     * @var bool
+     */
     public $nmi = false;
-    /** @var bool */
+
+    /**
+     * @var bool
+     */
     public $irq = false;
 
     public function isNmiAssert(): bool

@@ -1,9 +1,12 @@
 <?php
+
 namespace Nes\Bus;
 
 class PpuBus
 {
-    /** @var \Nes\Bus\Ram */
+    /**
+     * @var \Nes\Bus\Ram
+     */
     public $characterRam;
 
     public function __construct(Ram $characterRam)

@@ -1,13 +1,22 @@
 <?php
+
 namespace Nes\Ppu;
 
 class RenderingData
 {
-    /** @var int[] */
+    /**
+     * @var int[]
+     */
     public $palette;
-    /** @var \Nes\Ppu\Tile[] */
+
+    /**
+     * @var \Nes\Ppu\Tile[]
+     */
     public $background;
-    /** @var \Nes\Ppu\SpriteWithAttribute[] */
+
+    /**
+     * @var \Nes\Ppu\SpriteWithAttribute[]
+     */
     public $sprites;
 
     public function __construct($palette, $background, $sprites)

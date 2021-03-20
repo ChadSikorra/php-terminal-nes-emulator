@@ -1,11 +1,14 @@
 <?php
+
 namespace Nes\Ppu;
 
 use Nes\Bus\Ram;
 
 class Palette
 {
-    /** @var \Nes\Bus\Ram */
+    /**
+     * @var \Nes\Bus\Ram
+     */
     public $paletteRam;
 
     public function __construct()
@@ -15,12 +18,12 @@ class Palette
 
     public function isSpriteMirror(int $addr): bool
     {
-        return ($addr === 0x10) or ($addr === 0x14) or ($addr === 0x18) or ($addr === 0x1c);
+        return (0x10 === $addr) or (0x14 === $addr) or (0x18 === $addr) or (0x1c === $addr);
     }
 
     public function isBackgroundMirror(int $addr): bool
     {
-        return ($addr === 0x04) or ($addr === 0x08) or ($addr === 0x0c);
+        return (0x04 === $addr) or (0x08 === $addr) or (0x0c === $addr);
     }
 
     public function read(): array
@@ -35,6 +38,7 @@ class Palette
                 $return[$i] = $value;
             }
         }
+
         return $return;
     }
 

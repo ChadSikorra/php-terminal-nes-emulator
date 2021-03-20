@@ -1,17 +1,21 @@
 <?php
+
 namespace Nes\Ppu\Canvas;
 
 class NullCanvas implements CanvasInterface
 {
     private $fp;
+
     private $frame;
+
     private $last;
+
     private $initial;
 
     public function __construct()
     {
         $dir = 'tmp';
-        if (! is_dir(($dir))) {
+        if (!is_dir(($dir))) {
             mkdir($dir);
         }
         $this->fp = fopen($dir.'/nes.log', 'w');

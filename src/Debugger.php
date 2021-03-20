@@ -1,4 +1,5 @@
 <?php
+
 namespace Nes;
 
 class Debugger
@@ -6,11 +7,11 @@ class Debugger
     public static function dump($array)
     {
         foreach ($array as $idx => $byte) {
-            if ($idx % 16 == 0) {
+            if (0 == $idx % 16) {
                 printf("\n%04x ", $idx);
             }
-            if ($idx % 8 == 0) {
-                printf(" ");
+            if (0 == $idx % 8) {
+                printf(' ');
             }
             printf('%02x ', $byte);
         }

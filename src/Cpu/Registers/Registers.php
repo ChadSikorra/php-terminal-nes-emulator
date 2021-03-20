@@ -1,24 +1,42 @@
 <?php
+
 namespace Nes\Cpu\Registers;
 
 class Registers
 {
-    /** @var int byte */
+    /**
+     * @var int byte
+     */
     public $a;
-    /** @var int byte */
+
+    /**
+     * @var int byte
+     */
     public $x;
-    /** @var int byte */
+
+    /**
+     * @var int byte
+     */
     public $y;
-    /** @var \Nes\Cpu\Registers\Status */
+
+    /**
+     * @var \Nes\Cpu\Registers\Status
+     */
     public $p;
-    /** @var int word */
+
+    /**
+     * @var int word
+     */
     public $sp;
-    /** @var int word */
+
+    /**
+     * @var int word
+     */
     public $pc;
 
     public static function getDefault()
     {
-        $instance = new self;
+        $instance = new self();
         $instance->a = 0x00;
         $instance->x = 0x00;
         $instance->y = 0x00;

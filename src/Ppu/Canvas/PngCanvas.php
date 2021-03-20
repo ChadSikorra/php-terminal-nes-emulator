@@ -1,4 +1,5 @@
 <?php
+
 namespace Nes\Ppu\Canvas;
 
 class PngCanvas implements CanvasInterface
@@ -19,6 +20,21 @@ class PngCanvas implements CanvasInterface
         imagedestroy($this->image);
     }
 
+    public function draw(array $frameBuffer, int $fps, int $fis)
+    {
+        for ($y = 0; $y < 224; ++$y) {
+            $y_x_100 = $y * 0x100;
+            for ($x = 0; $x < 256; ++$x) {
+                $color = $this->getColor($frameBuffer, $x, $y_x_100);
+                imagesetpixel($this->image, $x, $y, $color);
+            }
+        }
+        if (!is_dir('screen')) {
+            mkdir('screen');
+        }
+        imagepng($this->image, sprintf('screen/%08d.png', $this->serial++));
+    }
+
     private function getColor(array $frameBuffer, int $x, int $y_x_100)
     {
         $index = ($x + $y_x_100);
@@ -33,21 +49,7 @@ class PngCanvas implements CanvasInterface
                 $blue
             );
         }
-        return $this->colorCache[$frameBuffer[$index]];
-    }
 
-    public function draw(array $frameBuffer, int $fps, int $fis)
-    {
-        for ($y = 0; $y < 224; $y++) {
-            $y_x_100 = $y * 0x100;
-            for ($x = 0; $x < 256; $x++) {
-                $color = $this->getColor($frameBuffer, $x, $y_x_100);
-                imagesetpixel($this->image, $x, $y, $color);
-            }
-        }
-        if (! is_dir('screen')) {
-            mkdir('screen');
-        }
-        imagepng($this->image, sprintf("screen/%08d.png", $this->serial++));
+        return $this->colorCache[$frameBuffer[$index]];
     }
 }

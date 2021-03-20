@@ -1,22 +1,28 @@
 <?php
+
 namespace Nes\NesFile;
+
+use Exception;
 
 class NesFile
 {
-    const NES_HEADER_SIZE = 0x0010;
-    const PROGRAM_ROM_SIZE = 0x4000;
-    const CHARACTER_ROM_SIZE = 0x2000;
+    public const NES_HEADER_SIZE = 0x0010;
+
+    public const PROGRAM_ROM_SIZE = 0x4000;
+
+    public const CHARACTER_ROM_SIZE = 0x2000;
 
     /**
      * @param string $nesBuffer Rom binary
      *
+     * @throws Exception
+     *
      * @return \Nes\NesFile\NesRom
-     * @throws \Exception
      */
     public static function parse($nesBuffer): NesRom
     {
-        if (substr($nesBuffer, 0, 3) !== 'NES') {
-            throw new \Exception('This file is not NES format.');
+        if ('NES' !== substr($nesBuffer, 0, 3)) {
+            throw new Exception('This file is not NES format.');
         }
         $nes = [];
         for ($i = 0; $i < strlen($nesBuffer); ++$i) {
@@ -52,6 +58,7 @@ class NesFile
             dechex(count($nesRom->characterRom)),
             count($nesRom->characterRom)
         );
+
         return $nesRom;
     }
 }

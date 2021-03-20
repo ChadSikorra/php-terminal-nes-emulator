@@ -1,21 +1,32 @@
 <?php
+
 namespace Nes\Cpu;
 
 class Addressing
 {
-    // @codingStandardsIgnoreStart
-    const Immediate = 0;
-    const ZeroPage = 1;
-    const Relative = 2;
-    const Implied = 3;
-    const Absolute = 4;
-    const Accumulator = 5;
-    const ZeroPageX = 6;
-    const ZeroPageY = 7;
-    const AbsoluteX = 8;
-    const AbsoluteY = 9;
-    const PreIndexedIndirect = 10;
-    const PostIndexedIndirect = 11;
-    const IndirectAbsolute = 12;
-    // @codingStandardsIgnoreEnd
+    public const Immediate = 0;
+
+    public const ZeroPage = 1;
+
+    public const Relative = 2;
+
+    public const Implied = 3;
+
+    public const Absolute = 4;
+
+    public const Accumulator = 5;
+
+    public const ZeroPageX = 6;
+
+    public const ZeroPageY = 7;
+
+    public const AbsoluteX = 8;
+
+    public const AbsoluteY = 9;
+
+    public const PreIndexedIndirect = 10;
+
+    public const PostIndexedIndirect = 11;
+
+    public const IndirectAbsolute = 12;
 }

@@ -1,44 +1,82 @@
 <?php
+
 namespace Nes;
 
+use Exception;
 use Nes\Bus\CpuBus;
+use Nes\Bus\Keypad;
 use Nes\Bus\PpuBus;
 use Nes\Bus\Ram;
 use Nes\Bus\Rom;
 use Nes\Cpu\Cpu;
 use Nes\Cpu\Dma;
 use Nes\Cpu\Interrupts;
-use Nes\Bus\Keypad;
 use Nes\NesFile\NesFile;
 use Nes\Ppu\Canvas\CanvasInterface;
 use Nes\Ppu\Ppu;
 use Nes\Ppu\Renderer;
+use RuntimeException;
 
 class Nes
 {
-    /** @var \Nes\Cpu\Cpu */
+    /**
+     * @var \Nes\Cpu\Cpu
+     */
     public $cpu;
-    /** @var \Nes\Ppu\Ppu */
+
+    /**
+     * @var \Nes\Ppu\Ppu
+     */
     public $ppu;
-    /** @var \Nes\Bus\CpuBus */
+
+    /**
+     * @var \Nes\Bus\CpuBus
+     */
     public $cpuBus;
-    /** @var \Nes\Bus\Ram */
+
+    /**
+     * @var \Nes\Bus\Ram
+     */
     public $characterMem;
-    /** @var \Nes\Bus\Rom */
+
+    /**
+     * @var \Nes\Bus\Rom
+     */
     public $programRom;
-    /** @var \Nes\Bus\Ram */
+
+    /**
+     * @var \Nes\Bus\Ram
+     */
     public $ram;
-    /** @var \Nes\Bus\PpuBus */
+
+    /**
+     * @var \Nes\Bus\PpuBus
+     */
     public $ppuBus;
-    /** @var \Nes\Ppu\Renderer */
+
+    /**
+     * @var \Nes\Ppu\Renderer
+     */
     public $renderer;
-    /** @var \Nes\Bus\Keypad */
+
+    /**
+     * @var \Nes\Bus\Keypad
+     */
     public $keypad;
-    /** @var \Nes\Cpu\Dma */
+
+    /**
+     * @var \Nes\Cpu\Dma
+     */
     public $dma;
-    /** @var \Nes\Cpu\Interrupts */
+
+    /**
+     * @var \Nes\Cpu\Interrupts
+     */
     public $interrupts;
-    /** @var Debugger */
+
+    /**
+     * @var Debugger
+     */
     public $debugger;
 
     public $frame;
@@ -64,14 +102,14 @@ class Nes
     | 0x8000-0xBFFF  |  program ROM LOW           |                |
     | 0xC000-0xFFFF  |  program ROM HIGH          |                |
     */
+
     /**
-     * @param string $nesRomFilename
-     * @throws \Exception
+     * @throws Exception
      */
     public function load(string $nesRomFilename)
     {
-        if (! is_file($nesRomFilename)) {
-            throw new \RuntimeException('Nes ROM file not found.');
+        if (!is_file($nesRomFilename)) {
+            throw new RuntimeException('Nes ROM file not found.');
         }
         $nesRomBinary = file_get_contents($nesRomFilename);
         $nesRom = NesFile::parse($nesRomBinary);
@@ -79,7 +117,7 @@ class Nes
         $this->keypad = new Keypad();
         $this->ram = new Ram(2048);
         $this->characterMem = new Ram(0x4000);
-        for ($i = 0; $i < count($nesRom->characterRom); $i++) {
+        for ($i = 0; $i < count($nesRom->characterRom); ++$i) {
             $this->characterMem->write($i, $nesRom->characterRom[$i]);
         }
         $this->programRom = new Rom($nesRom->programRom);
@@ -99,7 +137,7 @@ class Nes
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function frame()
     {
@@ -114,13 +152,14 @@ class Nes
             if ($renderingData) {
                 $this->cpu->bus->keypad->fetch();
                 $this->renderer->render($renderingData);
+
                 break;
             }
         }
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function start()
     {

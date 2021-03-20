@@ -1,9 +1,12 @@
 <?php
+
 namespace Nes\Bus;
 
 class Ram
 {
-    /** @var int[] */
+    /**
+     * @var int[]
+     */
     public $ram = [];
 
     public function __construct(int $size)
