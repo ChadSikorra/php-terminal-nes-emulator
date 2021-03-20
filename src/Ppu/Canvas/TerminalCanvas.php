@@ -14,6 +14,8 @@ class TerminalCanvas implements CanvasInterface
 
     protected $lastFrameCanvasBuffer;
 
+    protected $width = 0;
+
     /**
      * Braille Pixel Matrix
      *   ,___,
@@ -25,9 +27,7 @@ class TerminalCanvas implements CanvasInterface
      *
      * @var array
      */
-    protected $width = 0;
-
-    private $brailleMap = [];
+    private $brailleMap;
 
     private $pixelAvgCache0 = [];
 

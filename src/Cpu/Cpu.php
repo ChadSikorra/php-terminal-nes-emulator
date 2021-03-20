@@ -191,9 +191,6 @@ class Cpu
     }
 
     /**
-     * @param string $baseName
-     * @param int    $mode
-     *
      * @throws Exception
      */
     public function execInstruction(OpCodeProps $ocp, int $addrOrData)
