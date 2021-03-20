@@ -36,7 +36,7 @@ class PngCanvas implements CanvasInterface
         return $this->colorCache[$frameBuffer[$index]];
     }
 
-    public function draw(array $frameBuffer)
+    public function draw(array $frameBuffer, int $fps, int $fis)
     {
         for ($y = 0; $y < 224; $y++) {
             $y_x_100 = $y * 0x100;

@@ -5,11 +5,6 @@ use Nes\Ppu\Renderer;
 
 class TerminalCanvas implements CanvasInterface
 {
-    protected $canvas;
-
-    protected $currentSecond = 0;
-    protected $framesInSecond = 0;
-    protected $fps = 0;
     protected $height = 0;
     protected $lastFrame;
     protected $lastFrameCanvasBuffer;
@@ -23,11 +18,9 @@ class TerminalCanvas implements CanvasInterface
      *   `````
      * @var array
      */
-    protected $pixelMap;
     protected $width = 0;
 
     public $threshold = 127;
-    public $frameSkip = 0;
     private $brailleMap = [];
     private $pixelAvgCache0 = [];
     private $pixelAvgCache1 = [];
@@ -78,7 +71,7 @@ class TerminalCanvas implements CanvasInterface
         }
     }
 
-    public function draw(array $canvasBuffer)
+    public function draw(array $frameBuffer, int $fps, int $fis)
     {
         $pixelAvgCache0 = $this->pixelAvgCache0;
         $pixelAvgCache1 = $this->pixelAvgCache1;
@@ -89,21 +82,12 @@ class TerminalCanvas implements CanvasInterface
         $pixelAvgCache6 = $this->pixelAvgCache6;
         $pixelAvgCache7 = $this->pixelAvgCache7;
 
-        //Calculate current FPS
-        if ($this->currentSecond != time()) {
-            $this->fps = $this->framesInSecond;
-            $this->currentSecond = time();
-            $this->framesInSecond = 1;
-        } else {
-            ++$this->framesInSecond;
-        }
-
         $screenWidth = 256;
         $screenHeight = 224;
         $charWidth = $screenWidth / 2;
         $charHeight = $screenHeight / 4;
 
-        if ($canvasBuffer != $this->lastFrameCanvasBuffer) {
+        if ($frameBuffer != $this->lastFrameCanvasBuffer) {
             $breilleMap = $this->brailleMap;
 
             $frame = '';
@@ -123,14 +107,14 @@ class TerminalCanvas implements CanvasInterface
                     $pixelCanvasNumber7 = $x + $pixelCanvasNumberY3;
                     $pixelCanvasNumber8 = $pixelCanvasNumber7 + 1;
 
-                    $pixel0 = $pixelAvgCache0[$canvasBuffer[$pixelCanvasNumber]];
-                    $pixel1 = $pixelAvgCache1[$canvasBuffer[$pixelCanvasNumber2]];
-                    $pixel2 = $pixelAvgCache2[$canvasBuffer[$pixelCanvasNumber3]];
-                    $pixel3 = $pixelAvgCache3[$canvasBuffer[$pixelCanvasNumber4]];
-                    $pixel4 = $pixelAvgCache4[$canvasBuffer[$pixelCanvasNumber5]];
-                    $pixel5 = $pixelAvgCache5[$canvasBuffer[$pixelCanvasNumber6]];
-                    $pixel6 = $pixelAvgCache6[$canvasBuffer[$pixelCanvasNumber7]];
-                    $pixel7 = $pixelAvgCache7[$canvasBuffer[$pixelCanvasNumber8]];
+                    $pixel0 = $pixelAvgCache0[$frameBuffer[$pixelCanvasNumber]];
+                    $pixel1 = $pixelAvgCache1[$frameBuffer[$pixelCanvasNumber2]];
+                    $pixel2 = $pixelAvgCache2[$frameBuffer[$pixelCanvasNumber3]];
+                    $pixel3 = $pixelAvgCache3[$frameBuffer[$pixelCanvasNumber4]];
+                    $pixel4 = $pixelAvgCache4[$frameBuffer[$pixelCanvasNumber5]];
+                    $pixel5 = $pixelAvgCache5[$frameBuffer[$pixelCanvasNumber6]];
+                    $pixel6 = $pixelAvgCache6[$frameBuffer[$pixelCanvasNumber7]];
+                    $pixel7 = $pixelAvgCache7[$frameBuffer[$pixelCanvasNumber8]];
 
                     $char = $pixel0 | $pixel1 | $pixel2 | $pixel3 | $pixel4 | $pixel5 | $pixel6 | $pixel7;
 
@@ -143,7 +127,7 @@ class TerminalCanvas implements CanvasInterface
             }
 
             $this->lastFrame = $frame;
-            $this->lastFrameCanvasBuffer = $canvasBuffer;
+            $this->lastFrameCanvasBuffer = $frameBuffer;
 
             $content = "\e[H\e[2J";
 
@@ -151,7 +135,7 @@ class TerminalCanvas implements CanvasInterface
                 $content = "\e[{$this->height}A\e[{$this->width}D";
             }
 
-            $content .= sprintf('FPS: %3d - Frame Skip: %3d' . PHP_EOL, $this->fps, $this->framesInSecond) . $frame;
+            $content .= sprintf('FPS: %3d - Frame Skip: %3d' . PHP_EOL, $fps, $fis) . $frame;
             echo $content;
 
             $this->height = $charHeight + 1;

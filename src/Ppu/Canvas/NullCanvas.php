@@ -25,7 +25,7 @@ class NullCanvas implements CanvasInterface
         fclose($this->fp);
     }
 
-    public function draw(array $frameBuffer)
+    public function draw(array $frameBuffer, int $fps, int $fis)
     {
         $microTime = microtime(true);
         $second = floor($microTime);

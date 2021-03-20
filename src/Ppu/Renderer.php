@@ -14,6 +14,12 @@ class Renderer
     /** @var \Nes\Ppu\Canvas\CanvasInterface */
     public $canvas;
 
+    protected $currentSecond = 0;
+
+    protected $framesInSecond = 0;
+
+    protected $fps = 0;
+
     const COLORS = [
         0x808080, 0x003DA6, 0x0012B0, 0x440096,
         0xA1005E, 0xC70028, 0xBA0600, 0x8C1700,
@@ -46,16 +52,30 @@ class Renderer
         $tileX = (int)($x / 8);
         $tileY = (int)($y / 8);
         $backgroundIndex = $tileY * 33 + $tileX;
-        $sprite = $this->background[$backgroundIndex] && $this->background[$backgroundIndex]->pattern;
-        if (! $sprite) {
+
+        $sprite = null;
+        if (isset($this->background[$backgroundIndex]) && $this->background[$backgroundIndex]->pattern) {
+            $sprite = $this->background[$backgroundIndex]->pattern;
+        }
+        if (!$sprite) {
             return true;
         }
+
         // NOTE: If background pixel is not transparent, we need to hide sprite.
         return !(($sprite[$y % 8] && $sprite[$y % 8][$x % 8] % 4) === 0);
     }
 
     public function render(RenderingData $data)
     {
+        //Calculate current FPS
+        if ($this->currentSecond != time()) {
+            $this->fps = $this->framesInSecond;
+            $this->currentSecond = time();
+            $this->framesInSecond = 1;
+        } else {
+            ++$this->framesInSecond;
+        }
+
         if ($data->background or $data->sprites) {
             $paletteColorsMap = [];
             $colors = self::COLORS;
@@ -70,7 +90,13 @@ class Renderer
             $this->renderSprites($data->sprites, $paletteColorsMap);
         }
 
-        $this->canvas->draw($this->frameBuffer);
+        if ($this->framesInSecond < 61) {
+            $this->canvas->draw(
+                $this->frameBuffer,
+                $this->fps,
+                $this->framesInSecond
+            );
+        }
     }
 
     public function renderBackground(array $background, array $paletteColorsMap)
