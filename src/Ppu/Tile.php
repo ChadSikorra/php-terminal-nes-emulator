@@ -4,14 +4,20 @@ namespace Nes\Ppu;
 
 class Tile
 {
-    public $pattern;
+    /**
+     * @var array<int, array>
+     */
+    public array $pattern;
 
-    public $paletteId;
+    public int $paletteId;
 
-    public $scrollX;
+    public int $scrollX;
 
-    public $scrollY;
+    public int $scrollY;
 
+    /**
+     * @param array<int, array> $pattern
+     */
     public function __construct(array $pattern, int $paletteId, int $scrollX, int $scrollY)
     {
         $this->pattern = $pattern;

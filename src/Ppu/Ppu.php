@@ -88,107 +88,53 @@ class Ppu
     /**
      * @var int[]
      */
-    public $registers;
+    public array $registers;
+
+    public int $cycle;
+
+    public int $line;
+
+    public bool $isValidVramAddr;
+
+    public bool $isLowerVramAddr;
+
+    public int $spriteRamAddr;
+
+    public int $vramAddr;
+
+    public Ram $vram;
+
+    public int $vramReadBuf;
+
+    public Ram $spriteRam;
+
+    public PpuBus $bus;
 
     /**
-     * @var int
+     * @var Tile[]
      */
-    public $cycle;
+    public array $background;
 
     /**
-     * @var int
+     * @var SpriteWithAttribute[]
      */
-    public $line;
+    public array $sprites;
 
-    /**
-     * @var bool
-     */
-    public $isValidVramAddr;
+    public Palette $palette;
 
-    /**
-     * @var bool
-     */
-    public $isLowerVramAddr;
+    public Interrupts $interrupts;
 
-    /**
-     * @var int
-     */
-    public $spriteRamAddr;
+    public bool $isHorizontalScroll;
 
-    /**
-     * @var int
-     */
-    public $vramAddr;
+    public int $scrollX;
 
-    /**
-     * @var \Nes\Bus\Ram
-     */
-    public $vram;
+    public int $scrollY;
 
-    /**
-     * @var int
-     */
-    public $vramReadBuf;
+    public bool $isHorizontalMirror;
 
-    /**
-     * @var \Nes\Bus\Ram
-     */
-    public $spriteRam;
+    private array $defaultSpriteBuffer;
 
-    /**
-     * @var \Nes\Bus\PpuBus
-     */
-    public $bus;
-
-    /**
-     * @var \Nes\Ppu\Tile[]
-     */
-    public $background;
-
-    /**
-     * @var \Nes\Ppu\SpriteWithAttribute[]
-     */
-    public $sprites;
-
-    /**
-     * @var \Nes\Ppu\Palette
-     */
-    public $palette;
-
-    /**
-     * @var \Nes\Cpu\Interrupts
-     */
-    public $interrupts;
-
-    /**
-     * @var bool
-     */
-    public $isHorizontalScroll;
-
-    /**
-     * @var int
-     */
-    public $scrollX;
-
-    /**
-     * @var int
-     */
-    public $scrollY;
-
-    /**
-     * @var bool
-     */
-    public $isHorizontalMirror;
-
-    /**
-     * @var array
-     */
-    private $defaultSpriteBuffer;
-
-    /**
-     * @var array
-     */
-    private $spriteCache = [[]];
+    private array $spriteCache = [[]];
 
     public function __construct(PpuBus $bus, Interrupts $interrupts, bool $isHorizontalMirror)
     {
@@ -224,17 +170,17 @@ class Ppu
         return $this->registers[0x00] & 0x03;
     }
 
-    public function getPalette()
+    public function getPalette(): array
     {
         return $this->palette->read();
     }
 
-    public function clearSpriteHit()
+    public function clearSpriteHit(): void
     {
         $this->registers[0x02] &= 0xbf;
     }
 
-    public function setSpriteHit()
+    public function setSpriteHit(): void
     {
         $this->registers[0x02] |= 0x40;
     }
@@ -293,7 +239,7 @@ class Ppu
         return ($this->registers[0] & 0x10) ? 0x1000 : 0x0000;
     }
 
-    public function setVblank()
+    public function setVblank(): void
     {
         $this->registers[0x02] |= 0x80;
     }
@@ -303,7 +249,7 @@ class Ppu
         return (bool) ($this->registers[0x02] & 0x80);
     }
 
-    public function clearVblank()
+    public function clearVblank(): void
     {
         $this->registers[0x02] &= 0x7F;
     }
@@ -340,15 +286,13 @@ class Ppu
         return $addr;
     }
 
-    // The PPU draws one line at 341 clocks and prepares for the next line.
-    // While drawing the BG and sprite at the first 256 clocks,
-    // it searches for sprites to be drawn on the next scan line.
-    // Get the pattern of the sprite searched with the remaining clock.
-
     /**
-     * @return null|\Nes\Ppu\RenderingData
+     * The PPU draws one line at 341 clocks and prepares for the next line.
+     * While drawing the BG and sprite at the first 256 clocks,
+     * it searches for sprites to be drawn on the next scan line.
+     * Get the pattern of the sprite searched with the remaining clock.
      */
-    public function run(int $cycle)
+    public function run(int $cycle): ?RenderingData
     {
         $this->cycle += $cycle;
         if (0 === $this->line) {
@@ -382,8 +326,8 @@ class Ppu
 
                 return new RenderingData(
                     $this->getPalette(),
-                    $this->isBackgroundEnable() ? $this->background : null,
-                    $this->isSpriteEnable() ? $this->sprites : null
+                    $this->isBackgroundEnable() ? $this->background : [],
+                    $this->isSpriteEnable() ? $this->sprites : []
                 );
             }
         }
@@ -408,7 +352,7 @@ class Ppu
         );
     }
 
-    public function buildBackground()
+    public function buildBackground(): void
     {
         // INFO: Horizontal offsets range from 0 to 255. "Normal" vertical offsets range from 0 to 239,
         // while values of 240 to 255 are treated as -16 through -1 in a way, but tile data is incorrectly
@@ -428,7 +372,7 @@ class Ppu
         }
     }
 
-    public function buildSprites()
+    public function buildSprites(): void
     {
         $offset = ($this->registers[0] & 0x08) ? 0x1000 : 0x0000;
         $characterRam = $this->bus->characterRam->ram;
@@ -532,7 +476,7 @@ class Ppu
         return 0;
     }
 
-    public function write(int $addr, int $data)
+    public function write(int $addr, int $data): void
     {
         if (0x0003 === $addr) {
             $this->writeSpriteRamAddr($data);
@@ -552,18 +496,18 @@ class Ppu
         $this->registers[$addr] = $data;
     }
 
-    public function writeSpriteRamAddr(int $data)
+    public function writeSpriteRamAddr(int $data): void
     {
         $this->spriteRamAddr = $data;
     }
 
-    public function writeSpriteRamData(int $data)
+    public function writeSpriteRamData(int $data): void
     {
         $this->spriteRam->write($this->spriteRamAddr, $data);
         ++$this->spriteRamAddr;
     }
 
-    public function writeScrollData($data)
+    public function writeScrollData($data): void
     {
         if ($this->isHorizontalScroll) {
             $this->isHorizontalScroll = false;
@@ -574,7 +518,7 @@ class Ppu
         }
     }
 
-    public function writeVramAddr(int $data)
+    public function writeVramAddr(int $data): void
     {
         if ($this->isLowerVramAddr) {
             $this->vramAddr += $data;
@@ -608,12 +552,12 @@ class Ppu
         $this->vramAddr += $this->vramOffset();
     }
 
-    public function writeVram(int $addr, int $data)
+    public function writeVram(int $addr, int $data): void
     {
         $this->vram->write($addr, $data);
     }
 
-    public function transferSprite(int $index, int $data)
+    public function transferSprite(int $index, int $data): void
     {
         // The DMA transfer will begin at the current OAM write address.
         // It is common practice to initialize it to 0 with a write to PPU 0x2003 before the DMA transfer.

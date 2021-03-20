@@ -4,16 +4,22 @@ namespace Nes\Ppu;
 
 class SpriteWithAttribute
 {
-    public $sprite;
+    /**
+     * @var array<int, array>
+     */
+    public array $sprite;
 
-    public $x;
+    public int $x;
 
-    public $y;
+    public int $y;
 
-    public $attribute;
+    public int $attribute;
 
-    public $id;
+    public int $id;
 
+    /**
+     * @param array<int, array> $sprite
+     */
     public function __construct(array $sprite, int $x, int $y, int $attribute, int $id)
     {
         $this->sprite = $sprite;

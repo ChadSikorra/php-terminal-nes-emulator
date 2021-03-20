@@ -9,32 +9,18 @@ use Nes\Debugger;
 
 class Cpu
 {
-    public const CPU_CLOCK = 1789772.5;
+    public Registers $registers;
 
-    /**
-     * @var Registers
-     */
-    public $registers;
+    public bool $hasBranched;
 
-    /**
-     * @var bool
-     */
-    public $hasBranched;
-
-    /**
-     * @var CpuBus
-     */
-    public $bus;
+    public CpuBus $bus;
 
     /**
      * @var OpCodeProps[]
      */
-    public $opCodeList;
+    public array $opCodeList;
 
-    /**
-     * @var Interrupts
-     */
-    public $interrupts;
+    public Interrupts $interrupts;
 
     public function __construct(CpuBus $bus, Interrupts $interrupts)
     {
@@ -65,10 +51,10 @@ class Cpu
     public function getAddrOrDataWithAdditionalCycle(int $mode): array
     {
         switch ($mode) {
+            case Addressing::Implied:
             case Addressing::Accumulator:
                 return [0x00, 0];
-            case Addressing::Implied:
-                return [0x00, 0];
+            case Addressing::ZeroPage:
             case Addressing::Immediate:
                 return [$this->fetchByte($this->registers->pc), 0];
             case Addressing::Relative:
@@ -79,8 +65,6 @@ class Cpu
                     $addr,
                     ($addr & 0xff00) !== ($this->registers->pc & 0xFF00) ? 1 : 0,
                 ];
-            case Addressing::ZeroPage:
-                return [$this->fetchByte($this->registers->pc), 0];
             case Addressing::ZeroPageX:
                 $addr = $this->fetchByte($this->registers->pc);
 
@@ -134,12 +118,12 @@ class Cpu
         }
     }
 
-    public function write(int $addr, int $data)
+    public function write(int $addr, int $data): void
     {
         $this->bus->writeByCpu($addr, $data);
     }
 
-    public function push(int $data)
+    public function push(int $data): void
     {
         $this->write(0x100 | ($this->registers->sp & 0xFF), $data);
         --$this->registers->sp;
@@ -152,13 +136,13 @@ class Cpu
         return $this->readByte(0x100 | ($this->registers->sp & 0xFF));
     }
 
-    public function branch(int $addr)
+    public function branch(int $addr): void
     {
         $this->registers->pc = $addr;
         $this->hasBranched = true;
     }
 
-    public function pushStatus()
+    public function pushStatus(): void
     {
         $status = (+$this->registers->p->negative) << 7 |
             (+$this->registers->p->overflow) << 6 |
@@ -171,7 +155,7 @@ class Cpu
         $this->push($status);
     }
 
-    public function popStatus()
+    public function popStatus(): void
     {
         $status = $this->pop();
         $this->registers->p->negative = (bool) ($status & 0x80);
@@ -184,7 +168,7 @@ class Cpu
         $this->registers->p->carry = (bool) ($status & 0x01);
     }
 
-    public function popPC()
+    public function popPC(): void
     {
         $this->registers->pc = $this->pop();
         $this->registers->pc += ($this->pop() << 8);
@@ -193,7 +177,7 @@ class Cpu
     /**
      * @throws Exception
      */
-    public function execInstruction(OpCodeProps $ocp, int $addrOrData)
+    public function execInstruction(OpCodeProps $ocp, int $addrOrData): void
     {
         $this->hasBranched = false;
         switch ($ocp->baseType) {
@@ -669,7 +653,7 @@ class Cpu
         }
     }
 
-    public function processNmi()
+    public function processNmi(): void
     {
         $this->interrupts->deassertNmi();
         $this->registers->p->break_mode = false;
@@ -680,7 +664,7 @@ class Cpu
         $this->registers->pc = $this->readWord(0xFFFA);
     }
 
-    public function processIrq()
+    public function processIrq(): void
     {
         if ($this->registers->p->interrupt) {
             return;
@@ -741,7 +725,7 @@ class Cpu
         return $this->bus->readByCpu($addr) | $this->bus->readByCpu($addr + 1) << 8;
     }
 
-    private function debug($opcode)
+    private function debug($opcode): void
     {
         printf(
             "Invalid opcode: %s in pc: %04x\n",

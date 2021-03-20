@@ -7,17 +7,17 @@ use Nes\Ppu\Ppu;
 
 class CpuBus
 {
-    public $ram;
+    public Ram $ram;
 
-    public $programRom;
+    public Rom $programRom;
 
-    public $ppu;
+    public Ppu $ppu;
 
-    public $keypad;
+    public Keypad $keypad;
 
-    public $dma;
+    public Dma $dma;
 
-    private $use_mirror = false;
+    private bool $use_mirror;
 
     public function __construct(Ram $ram, Rom $programRom, Ppu $ppu, Keypad $keypad, Dma $dma)
     {
@@ -56,13 +56,13 @@ class CpuBus
         }
         if (0x4016 === $addr) {
             // TODO Add 2P
-            return $this->keypad->read();
+            return (int) $this->keypad->read();
         }
 
         return 0;
     }
 
-    public function writeByCpu(int $addr, int $data)
+    public function writeByCpu(int $addr, int $data): void
     {
         if ($addr < 0x0800) {
             // RAM
@@ -81,7 +81,7 @@ class CpuBus
                 $this->keypad->write($data);
             } else {
                 // APU
-                return false;
+                return;
             }
         }
     }

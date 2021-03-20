@@ -7,34 +7,31 @@ class Registers
     /**
      * @var int byte
      */
-    public $a;
+    public int $a;
 
     /**
      * @var int byte
      */
-    public $x;
+    public int $x;
 
     /**
      * @var int byte
      */
-    public $y;
+    public int $y;
 
-    /**
-     * @var \Nes\Cpu\Registers\Status
-     */
-    public $p;
+    public Status $p;
 
     /**
      * @var int word
      */
-    public $sp;
+    public int $sp;
 
     /**
      * @var int word
      */
-    public $pc;
+    public int $pc;
 
-    public static function getDefault()
+    public static function getDefault(): Registers
     {
         $instance = new self();
         $instance->a = 0x00;

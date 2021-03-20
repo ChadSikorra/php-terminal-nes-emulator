@@ -7,25 +7,18 @@ use Nes\Ppu\Ppu;
 
 class Dma
 {
-    public $isProcessing;
+    public bool $isProcessing = false;
 
-    public $ramAddr;
+    public int $ramAddr = 0x0000;
 
-    public $ram;
+    public Ram $ram;
 
-    public $ppu;
-
-    public $addr;
-
-    public $cycle;
+    public Ppu $ppu;
 
     public function __construct(Ram $ram, Ppu $ppu)
     {
         $this->ram = $ram;
         $this->ppu = $ppu;
-
-        $this->isProcessing = false;
-        $this->ramAddr = 0x0000;
     }
 
     public function isDmaProcessing(): bool
@@ -33,7 +26,7 @@ class Dma
         return $this->isProcessing;
     }
 
-    public function runDma()
+    public function runDma(): void
     {
         if (!$this->isProcessing) {
             return;
@@ -44,7 +37,7 @@ class Dma
         $this->isProcessing = false;
     }
 
-    public function write(int $data)
+    public function write(int $data): void
     {
         $this->ramAddr = $data << 8;
         $this->isProcessing = true;

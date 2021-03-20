@@ -16,12 +16,16 @@
   },
   "require-dev": {
     "phpunit/phpunit": "^9.5",
-    "friendsofphp/php-cs-fixer": "^2.18"
+    "friendsofphp/php-cs-fixer": "^2.18",
+    "phpstan/phpstan": "^0.12.82"
   },
   "autoload": {
     "psr-4": {
       "Nes\\": "src"
     }
+  },
+  "suggest": {
+    "ext-gd": "For the PngCanvas"
   },
   "autoload-dev": {
     "psr-4": {

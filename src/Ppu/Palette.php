@@ -7,7 +7,7 @@ use Nes\Bus\Ram;
 class Palette
 {
     /**
-     * @var \Nes\Bus\Ram
+     * @var Ram
      */
     public $paletteRam;
 
@@ -49,7 +49,7 @@ class Palette
         return $this->isSpriteMirror($mirrorDowned) ? $mirrorDowned - 0x10 : $mirrorDowned;
     }
 
-    public function write(int $addr, int $data)
+    public function write(int $addr, int $data): void
     {
         //$this->ram[$this->getPaletteAddr($addr)] = $data;
         $this->paletteRam->write($this->getPaletteAddr($addr), $data);

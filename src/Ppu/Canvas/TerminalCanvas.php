@@ -6,15 +6,15 @@ use Nes\Ppu\Renderer;
 
 class TerminalCanvas implements CanvasInterface
 {
-    public $threshold = 127;
+    public int $threshold = 127;
 
-    protected $height = 0;
+    protected int $height = 0;
 
-    protected $lastFrame;
+    protected string $lastFrame;
 
-    protected $lastFrameCanvasBuffer;
+    protected array $lastFrameCanvasBuffer = [];
 
-    protected $width = 0;
+    protected int $width = 0;
 
     /**
      * Braille Pixel Matrix
@@ -24,26 +24,24 @@ class TerminalCanvas implements CanvasInterface
      *   |3 6|
      *   |7 8|
      *   `````.
-     *
-     * @var array
      */
-    private $brailleMap;
+    private array $brailleMap;
 
-    private $pixelAvgCache0 = [];
+    private array $pixelAvgCache0 = [];
 
-    private $pixelAvgCache1 = [];
+    private array $pixelAvgCache1 = [];
 
-    private $pixelAvgCache2 = [];
+    private array $pixelAvgCache2 = [];
 
-    private $pixelAvgCache3 = [];
+    private array $pixelAvgCache3 = [];
 
-    private $pixelAvgCache4 = [];
+    private array $pixelAvgCache4 = [];
 
-    private $pixelAvgCache5 = [];
+    private array $pixelAvgCache5 = [];
 
-    private $pixelAvgCache6 = [];
+    private array $pixelAvgCache6 = [];
 
-    private $pixelAvgCache7 = [];
+    private array $pixelAvgCache7 = [];
 
     public function __construct()
     {
@@ -85,7 +83,7 @@ class TerminalCanvas implements CanvasInterface
         }
     }
 
-    public function draw(array $frameBuffer, int $fps, int $fis)
+    public function draw(array $frameBuffer, int $fps, int $fis): void
     {
         $pixelAvgCache0 = $this->pixelAvgCache0;
         $pixelAvgCache1 = $this->pixelAvgCache1;

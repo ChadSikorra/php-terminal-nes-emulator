@@ -5,21 +5,26 @@ namespace Nes\Ppu;
 class RenderingData
 {
     /**
-     * @var int[]
+     * @var array<int, array>
      */
-    public $palette;
+    public array $palette;
 
     /**
-     * @var \Nes\Ppu\Tile[]
+     * @var Tile[]
      */
-    public $background;
+    public array $background;
 
     /**
-     * @var \Nes\Ppu\SpriteWithAttribute[]
+     * @var SpriteWithAttribute[]
      */
-    public $sprites;
+    public array $sprites;
 
-    public function __construct($palette, $background, $sprites)
+    /**
+     * @param array<int, array>     $palette
+     * @param Tile[]                $background
+     * @param SpriteWithAttribute[] $sprites
+     */
+    public function __construct(array $palette, array $background, array $sprites)
     {
         $this->palette = $palette;
         $this->background = $background;

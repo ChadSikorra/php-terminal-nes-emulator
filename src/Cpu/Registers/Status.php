@@ -4,21 +4,21 @@ namespace Nes\Cpu\Registers;
 
 class Status
 {
-    public $negative;
+    public bool $negative;
 
-    public $overflow;
+    public bool $overflow;
 
-    public $reserved;
+    public bool $reserved;
 
-    public $break_mode;
+    public bool $break_mode;
 
-    public $decimal_mode;
+    public bool $decimal_mode;
 
-    public $interrupt;
+    public bool $interrupt;
 
-    public $zero;
+    public bool $zero;
 
-    public $carry;
+    public bool $carry;
 
     public function __construct(
         bool $negative,

@@ -4,10 +4,7 @@ namespace Nes\Bus;
 
 class PpuBus
 {
-    /**
-     * @var \Nes\Bus\Ram
-     */
-    public $characterRam;
+    public Ram $characterRam;
 
     public function __construct(Ram $characterRam)
     {
@@ -19,7 +16,7 @@ class PpuBus
         return $this->characterRam->read($addr);
     }
 
-    public function writeByPpu(int $addr, int $data)
+    public function writeByPpu(int $addr, int $data): void
     {
         $this->characterRam->write($addr, $data);
     }

@@ -4,7 +4,7 @@ namespace Nes;
 
 class Debugger
 {
-    public static function dump($array)
+    public static function dump(array $array): void
     {
         foreach ($array as $idx => $byte) {
             if (0 == $idx % 16) {

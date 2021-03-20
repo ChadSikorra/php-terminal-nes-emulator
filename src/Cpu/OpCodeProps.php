@@ -4,13 +4,13 @@ namespace Nes\Cpu;
 
 class OpCodeProps
 {
-    public $fullName;
+    public string $fullName;
 
-    public $baseType;
+    public int $baseType;
 
-    public $mode;
+    public int $mode;
 
-    public $cycle;
+    public int $cycle;
 
     public function __construct(string $fullName, int $baseType, int $mode, int $cycle)
     {

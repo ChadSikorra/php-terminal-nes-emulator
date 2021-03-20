@@ -9,30 +9,21 @@ class Keypad
      */
     public $file;
 
-    /**
-     * @var string
-     */
-    public $keyPressing;
+    public string $keyPressing;
 
     /**
      * @var bool[]
      */
-    public $keyBuffer;
+    public array $keyBuffer = [];
 
     /**
      * @var bool[]
      */
-    public $keyRegistors;
+    public array $keyRegisters = [];
 
-    /**
-     * @var bool
-     */
-    public $isSet;
+    public bool $isSet = false;
 
-    /**
-     * @var int
-     */
-    public $index;
+    public int $index = 0;
 
     public function __construct()
     {
@@ -43,7 +34,7 @@ class Keypad
         $this->keyBuffer = array_fill(0, 8, false);
     }
 
-    public function fetch()
+    public function fetch(): void
     {
         $key = fread($this->file, 1);
 
@@ -56,7 +47,7 @@ class Keypad
         $this->keyPressing = $key;
     }
 
-    public function keyDown($key)
+    public function keyDown(string $key)
     {
         $keyIndex = $this->matchKey($key);
         if ($keyIndex > -1) {
@@ -64,7 +55,7 @@ class Keypad
         }
     }
 
-    public function keyUp($key)
+    public function keyUp(string $key)
     {
         $keyIndex = $this->matchKey($key);
         if ($keyIndex > -1) {
@@ -72,7 +63,7 @@ class Keypad
         }
     }
 
-    public function matchKey($key)
+    public function matchKey(string $key): int
     {
         //Maps a keyboard key to a nes key.
         // A, B, SELECT, START, ↑, ↓, ←, →
@@ -85,19 +76,19 @@ class Keypad
         return $keyIndex;
     }
 
-    public function write(int $data)
+    public function write(int $data): void
     {
         if ($data & 0x01) {
             $this->isSet = true;
         } elseif ($this->isSet and !($data & 0x01)) {
             $this->isSet = false;
             $this->index = 0;
-            $this->keyRegistors = $this->keyBuffer;
+            $this->keyRegisters = $this->keyBuffer;
         }
     }
 
     public function read(): bool
     {
-        return $this->keyRegistors[$this->index++];
+        return $this->keyRegisters[$this->index++];
     }
 }

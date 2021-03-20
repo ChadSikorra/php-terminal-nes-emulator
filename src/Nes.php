@@ -79,7 +79,7 @@ class Nes
      */
     public $debugger;
 
-    public $frame;
+    public array $frame;
 
     public function __construct(CanvasInterface $canvas)
     {

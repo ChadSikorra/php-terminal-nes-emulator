@@ -20,7 +20,7 @@ class PngCanvas implements CanvasInterface
         imagedestroy($this->image);
     }
 
-    public function draw(array $frameBuffer, int $fps, int $fis)
+    public function draw(array $frameBuffer, int $fps, int $fis): void
     {
         for ($y = 0; $y < 224; ++$y) {
             $y_x_100 = $y * 0x100;

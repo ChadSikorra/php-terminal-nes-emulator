@@ -9,12 +9,9 @@ class Rom
     /**
      * @var int[]
      */
-    public $rom = [];
+    public array $rom = [];
 
-    /**
-     * @var int
-     */
-    private $size = 0;
+    private int $size;
 
     public function __construct(array $data)
     {
@@ -22,7 +19,7 @@ class Rom
         $this->size = count($data);
     }
 
-    public function size()
+    public function size(): int
     {
         return $this->size;
     }

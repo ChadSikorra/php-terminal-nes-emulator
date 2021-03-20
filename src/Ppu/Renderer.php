@@ -25,31 +25,22 @@ class Renderer
         0x99FFFC, 0xDDDDDD, 0x111111, 0x111111,
     ];
 
-    /**
-     * @var array
-     */
-    public $frameBuffer = [];
+    public array $frameBuffer = [];
 
     /**
-     * @var \Nes\Ppu\Tile[]
+     * @var Tile[]
      */
-    public $background;
+    public array $background;
 
-    /**
-     * @var int
-     */
-    public $serial = 0;
+    public int $serial = 0;
 
-    /**
-     * @var \Nes\Ppu\Canvas\CanvasInterface
-     */
-    public $canvas;
+    public CanvasInterface $canvas;
 
-    protected $currentSecond = 0;
+    protected int $currentSecond = 0;
 
-    protected $framesInSecond = 0;
+    protected int $framesInSecond = 0;
 
-    protected $fps = 0;
+    protected int $fps = 0;
 
     public function __construct(CanvasInterface $canvas)
     {
@@ -77,7 +68,7 @@ class Renderer
         return !(($sprite[$y % 8] && $sprite[$y % 8][$x % 8] % 4) === false);
     }
 
-    public function render(RenderingData $data)
+    public function render(RenderingData $data): void
     {
         //Calculate current FPS
         if ($this->currentSecond != time()) {
@@ -113,7 +104,7 @@ class Renderer
         }
     }
 
-    public function renderBackground(array $background, array $paletteColorsMap)
+    public function renderBackground(array $background, array $paletteColorsMap): void
     {
         $count_background = count($background);
         $this->background = $background;
@@ -124,7 +115,7 @@ class Renderer
         }
     }
 
-    public function renderSprites(array $sprites, array $paletteColorsMap)
+    public function renderSprites(array $sprites, array $paletteColorsMap): void
     {
         foreach ($sprites as $sprite) {
             if ($sprite) {
@@ -133,7 +124,7 @@ class Renderer
         }
     }
 
-    public function renderTile(Tile $tile, int $tileX, int $tileY, array $paletteColorsMap)
+    public function renderTile(Tile $tile, int $tileX, int $tileY, array $paletteColorsMap): void
     {
         //{ sprite, paletteId, scrollX, scrollY }: Tile
         $offsetX = $tileX - ($tile->scrollX % 8);
@@ -177,7 +168,7 @@ class Renderer
         }
     }
 
-    public function renderSprite(SpriteWithAttribute $sprite, array $paletteColorsMap)
+    public function renderSprite(SpriteWithAttribute $sprite, array $paletteColorsMap): void
     {
         $isVerticalReverse = (bool) ($sprite->attribute & 0x80);
         $isHorizontalReverse = (bool) ($sprite->attribute & 0x40);

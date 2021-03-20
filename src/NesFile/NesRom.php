@@ -4,20 +4,17 @@ namespace Nes\NesFile;
 
 class NesRom
 {
-    /**
-     * @var bool
-     */
-    public $isHorizontalMirror;
+    public bool $isHorizontalMirror;
 
     /**
      * @var int[]
      */
-    public $programRom;
+    public array $programRom;
 
     /**
      * @var int[]
      */
-    public $characterRom;
+    public array $characterRom;
 
     public function __construct(bool $isHorizontalMirror, array $programRom, array $characterRom)
     {

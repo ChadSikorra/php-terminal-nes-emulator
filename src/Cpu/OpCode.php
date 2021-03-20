@@ -136,11 +136,9 @@ class OpCode
 
     public const BASE_RRA = 66;
 
-    public static $cycles;
+    public static array $cycles;
 
-    public static $m;
-
-    public static function getOpCodes()
+    public static function getOpCodes(): array
     {
         self::$cycles = [
             7, 6, 2, 8, 3, 3, 5, 5, 3, 2, 2, 2, 4, 4, 6, 6,

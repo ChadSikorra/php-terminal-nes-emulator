@@ -4,15 +4,9 @@ namespace Nes\Cpu;
 
 class Interrupts
 {
-    /**
-     * @var bool
-     */
-    public $nmi = false;
+    public bool $nmi = false;
 
-    /**
-     * @var bool
-     */
-    public $irq = false;
+    public bool $irq = false;
 
     public function isNmiAssert(): bool
     {
@@ -24,22 +18,22 @@ class Interrupts
         return $this->irq;
     }
 
-    public function assertNmi()
+    public function assertNmi(): void
     {
         $this->nmi = true;
     }
 
-    public function deassertNmi()
+    public function deassertNmi(): void
     {
         $this->nmi = false;
     }
 
-    public function assertIrq()
+    public function assertIrq(): void
     {
         $this->nmi = true;
     }
 
-    public function deassertIrq()
+    public function deassertIrq(): void
     {
         $this->nmi = false;
     }

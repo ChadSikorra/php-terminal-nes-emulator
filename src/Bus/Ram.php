@@ -7,14 +7,14 @@ class Ram
     /**
      * @var int[]
      */
-    public $ram = [];
+    public array $ram = [];
 
     public function __construct(int $size)
     {
         $this->ram = array_fill(0, $size, 0);
     }
 
-    public function reset()
+    public function reset(): void
     {
         $this->ram = array_fill(0, count($this->ram) - 1, 0);
     }
@@ -24,7 +24,7 @@ class Ram
         return $this->ram[$addr];
     }
 
-    public function write(int $addr, int $val)
+    public function write(int $addr, int $val): void
     {
         $this->ram[$addr] = $val;
     }

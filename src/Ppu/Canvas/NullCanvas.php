@@ -6,11 +6,11 @@ class NullCanvas implements CanvasInterface
 {
     private $fp;
 
-    private $frame;
+    private int $frame;
 
-    private $last;
+    private float $last;
 
-    private $initial;
+    private int $initial;
 
     public function __construct()
     {
@@ -29,7 +29,7 @@ class NullCanvas implements CanvasInterface
         fclose($this->fp);
     }
 
-    public function draw(array $frameBuffer, int $fps, int $fis)
+    public function draw(array $frameBuffer, int $fps, int $fis): void
     {
         $microTime = microtime(true);
         $second = floor($microTime);

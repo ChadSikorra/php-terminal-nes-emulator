@@ -16,10 +16,8 @@ class NesFile
      * @param string $nesBuffer Rom binary
      *
      * @throws Exception
-     *
-     * @return \Nes\NesFile\NesRom
      */
-    public static function parse($nesBuffer): NesRom
+    public static function parse(string $nesBuffer): NesRom
     {
         if ('NES' !== substr($nesBuffer, 0, 3)) {
             throw new Exception('This file is not NES format.');
