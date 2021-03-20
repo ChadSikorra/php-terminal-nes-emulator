@@ -136,8 +136,14 @@ class OpCode
 
     public const BASE_RRA = 66;
 
+    /**
+     * @var int[]
+     */
     public static array $cycles;
 
+    /**
+     * @return OpCodeProps[]
+     */
     public static function getOpCodes(): array
     {
         self::$cycles = [

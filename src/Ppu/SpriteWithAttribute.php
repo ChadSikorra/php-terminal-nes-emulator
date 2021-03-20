@@ -5,7 +5,7 @@ namespace Nes\Ppu;
 class SpriteWithAttribute
 {
     /**
-     * @var array<int, array>
+     * @var array<int[]>
      */
     public array $sprite;
 
@@ -18,7 +18,7 @@ class SpriteWithAttribute
     public int $id;
 
     /**
-     * @param array<int, array> $sprite
+     * @param array<int[]> $sprite
      */
     public function __construct(array $sprite, int $x, int $y, int $attribute, int $id)
     {

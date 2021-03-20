@@ -16,6 +16,10 @@ class NesRom
      */
     public array $characterRom;
 
+    /**
+     * @param int[] $programRom
+     * @param int[] $characterRom
+     */
     public function __construct(bool $isHorizontalMirror, array $programRom, array $characterRom)
     {
         $this->isHorizontalMirror = $isHorizontalMirror;

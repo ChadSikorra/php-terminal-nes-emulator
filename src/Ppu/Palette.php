@@ -6,10 +6,7 @@ use Nes\Bus\Ram;
 
 class Palette
 {
-    /**
-     * @var Ram
-     */
-    public $paletteRam;
+    public Ram $paletteRam;
 
     public function __construct()
     {
@@ -26,9 +23,13 @@ class Palette
         return (0x04 === $addr) or (0x08 === $addr) or (0x0c === $addr);
     }
 
+    /**
+     * @return int[]
+     */
     public function read(): array
     {
         $return = [];
+
         foreach ($this->paletteRam->ram as $i => $value) {
             if ($this->isSpriteMirror($i)) {
                 $return[$i] = $this->paletteRam->read($i - 0x10);

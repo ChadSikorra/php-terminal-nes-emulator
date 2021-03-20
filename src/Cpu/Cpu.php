@@ -37,7 +37,7 @@ class Cpu
         }
     }
 
-    public function reset()
+    public function reset(): void
     {
         $this->registers = Registers::getDefault();
         // TODO: flownes set 0x8000 to PC when read(0xfffc) fails.
@@ -47,6 +47,7 @@ class Cpu
 
     /**
      * @throws Exception
+     * @return int[]
      */
     public function getAddrOrDataWithAdditionalCycle(int $mode): array
     {
@@ -725,7 +726,7 @@ class Cpu
         return $this->bus->readByCpu($addr) | $this->bus->readByCpu($addr + 1) << 8;
     }
 
-    private function debug($opcode): void
+    private function debug(int $opcode): void
     {
         printf(
             "Invalid opcode: %s in pc: %04x\n",

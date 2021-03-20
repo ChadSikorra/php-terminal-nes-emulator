@@ -2,12 +2,20 @@
 
 namespace Nes\Ppu\Canvas;
 
+use GdImage;
+
 class PngCanvas implements CanvasInterface
 {
-    private $serial = 0;
+    private int $serial = 0;
 
-    private $colorCache = [];
+    /**
+     * @var int[]
+     */
+    private array $colorCache = [];
 
+    /**
+     * @var false|GdImage|resource
+     */
     private $image;
 
     public function __construct()
@@ -35,7 +43,10 @@ class PngCanvas implements CanvasInterface
         imagepng($this->image, sprintf('screen/%08d.png', $this->serial++));
     }
 
-    private function getColor(array $frameBuffer, int $x, int $y_x_100)
+    /**
+     * @param int[] $frameBuffer
+     */
+    private function getColor(array $frameBuffer, int $x, int $y_x_100): int
     {
         $index = ($x + $y_x_100);
         if (!isset($this->colorCache[$frameBuffer[$index]])) {

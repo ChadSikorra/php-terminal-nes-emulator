@@ -4,6 +4,9 @@ namespace Nes\Ppu\Canvas;
 
 class NullCanvas implements CanvasInterface
 {
+    /**
+     * @var false|resource
+     */
     private $fp;
 
     private int $frame;

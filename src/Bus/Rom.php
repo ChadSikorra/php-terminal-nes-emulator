@@ -13,6 +13,9 @@ class Rom
 
     private int $size;
 
+    /**
+     * @param int[] $data
+     */
     public function __construct(array $data)
     {
         $this->rom = $data;
@@ -24,7 +27,7 @@ class Rom
         return $this->size;
     }
 
-    public function read(int $addr)
+    public function read(int $addr): int
     {
         if (!isset($this->rom[$addr])) {
             throw new RuntimeException(sprintf('Invalid address on rom read. Address: 0x%s Rom: 0x0000 - 0x%s', dechex($addr), dechex($this->size)));

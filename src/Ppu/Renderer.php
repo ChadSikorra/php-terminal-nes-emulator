@@ -25,6 +25,9 @@ class Renderer
         0x99FFFC, 0xDDDDDD, 0x111111, 0x111111,
     ];
 
+    /**
+     * @var int[]
+     */
     public array $frameBuffer = [];
 
     /**
@@ -104,6 +107,10 @@ class Renderer
         }
     }
 
+    /**
+     * @param Tile[] $background
+     * @param int[] $paletteColorsMap
+     */
     public function renderBackground(array $background, array $paletteColorsMap): void
     {
         $count_background = count($background);
@@ -115,15 +122,20 @@ class Renderer
         }
     }
 
+    /**
+     * @param SpriteWithAttribute[] $sprites
+     * @param int[] $paletteColorsMap
+     */
     public function renderSprites(array $sprites, array $paletteColorsMap): void
     {
         foreach ($sprites as $sprite) {
-            if ($sprite) {
-                $this->renderSprite($sprite, $paletteColorsMap);
-            }
+            $this->renderSprite($sprite, $paletteColorsMap);
         }
     }
 
+    /**
+     * @param int[] $paletteColorsMap
+     */
     public function renderTile(Tile $tile, int $tileX, int $tileY, array $paletteColorsMap): void
     {
         //{ sprite, paletteId, scrollX, scrollY }: Tile
@@ -168,6 +180,9 @@ class Renderer
         }
     }
 
+    /**
+     * @param int[] $paletteColorsMap
+     */
     public function renderSprite(SpriteWithAttribute $sprite, array $paletteColorsMap): void
     {
         $isVerticalReverse = (bool) ($sprite->attribute & 0x80);

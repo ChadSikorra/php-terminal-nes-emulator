@@ -12,35 +12,65 @@ class TerminalCanvas implements CanvasInterface
 
     protected string $lastFrame;
 
+    /**
+     * @var int[]
+     */
     protected array $lastFrameCanvasBuffer = [];
 
     protected int $width = 0;
 
     /**
      * Braille Pixel Matrix
+     *
      *   ,___,
      *   |1 4|
      *   |2 5|
      *   |3 6|
      *   |7 8|
-     *   `````.
+     *   `````
+     *
+     * @var array<int, string>
      */
     private array $brailleMap;
 
+    /**
+     * @var int[]
+     */
     private array $pixelAvgCache0 = [];
 
+    /**
+     * @var int[]
+     */
     private array $pixelAvgCache1 = [];
 
+    /**
+     * @var int[]
+     */
     private array $pixelAvgCache2 = [];
 
+    /**
+     * @var int[]
+     */
     private array $pixelAvgCache3 = [];
 
+    /**
+     * @var int[]
+     */
     private array $pixelAvgCache4 = [];
 
+    /**
+     * @var int[]
+     */
     private array $pixelAvgCache5 = [];
 
+    /**
+     * @var int[]
+     */
     private array $pixelAvgCache6 = [];
 
+    /**
+     * @var int[]
+     */
     private array $pixelAvgCache7 = [];
 
     public function __construct()
@@ -83,6 +113,9 @@ class TerminalCanvas implements CanvasInterface
         }
     }
 
+    /**
+     * @inheritDoc
+     */
     public function draw(array $frameBuffer, int $fps, int $fis): void
     {
         $pixelAvgCache0 = $this->pixelAvgCache0;
@@ -100,7 +133,7 @@ class TerminalCanvas implements CanvasInterface
         $charHeight = $screenHeight / 4;
 
         if ($frameBuffer != $this->lastFrameCanvasBuffer) {
-            $breilleMap = $this->brailleMap;
+            $brailleMap = $this->brailleMap;
 
             $frame = '';
             for ($y = 0, $y_quarter = 0; $y < $screenHeight; $y += 4, ++$y_quarter) {
@@ -130,7 +163,7 @@ class TerminalCanvas implements CanvasInterface
 
                     $char = $pixel0 | $pixel1 | $pixel2 | $pixel3 | $pixel4 | $pixel5 | $pixel6 | $pixel7;
 
-                    $frame .= $breilleMap[$char];
+                    $frame .= $brailleMap[$char];
 
                     if ($x >= $screenWidth) {
                         $frame .= PHP_EOL;

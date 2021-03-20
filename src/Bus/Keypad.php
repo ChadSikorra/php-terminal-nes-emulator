@@ -47,7 +47,7 @@ class Keypad
         $this->keyPressing = $key;
     }
 
-    public function keyDown(string $key)
+    public function keyDown(string $key): void
     {
         $keyIndex = $this->matchKey($key);
         if ($keyIndex > -1) {
@@ -55,7 +55,7 @@ class Keypad
         }
     }
 
-    public function keyUp(string $key)
+    public function keyUp(string $key): void
     {
         $keyIndex = $this->matchKey($key);
         if ($keyIndex > -1) {

@@ -19,66 +19,33 @@ use RuntimeException;
 
 class Nes
 {
-    /**
-     * @var \Nes\Cpu\Cpu
-     */
-    public $cpu;
+    public ?Cpu $cpu = null;
+
+    public ?Ppu $ppu = null;
+
+    public ?CpuBus $cpuBus = null;
+
+    public ?Ram $characterMem = null;
+
+    public ?Rom $programRom = null;
+
+    public ?Ram $ram = null;
+
+    public ?PpuBus $ppuBus = null;
+
+    public ?Renderer $renderer = null;
+
+    public ?Keypad $keypad = null;
+
+    public ?Dma $dma = null;
+
+    public ?Interrupts $interrupts = null;
+
+    public ?Debugger $debugger = null;
 
     /**
-     * @var \Nes\Ppu\Ppu
+     * @var int[]
      */
-    public $ppu;
-
-    /**
-     * @var \Nes\Bus\CpuBus
-     */
-    public $cpuBus;
-
-    /**
-     * @var \Nes\Bus\Ram
-     */
-    public $characterMem;
-
-    /**
-     * @var \Nes\Bus\Rom
-     */
-    public $programRom;
-
-    /**
-     * @var \Nes\Bus\Ram
-     */
-    public $ram;
-
-    /**
-     * @var \Nes\Bus\PpuBus
-     */
-    public $ppuBus;
-
-    /**
-     * @var \Nes\Ppu\Renderer
-     */
-    public $renderer;
-
-    /**
-     * @var \Nes\Bus\Keypad
-     */
-    public $keypad;
-
-    /**
-     * @var \Nes\Cpu\Dma
-     */
-    public $dma;
-
-    /**
-     * @var \Nes\Cpu\Interrupts
-     */
-    public $interrupts;
-
-    /**
-     * @var Debugger
-     */
-    public $debugger;
-
     public array $frame;
 
     public function __construct(CanvasInterface $canvas)
@@ -106,7 +73,7 @@ class Nes
     /**
      * @throws Exception
      */
-    public function load(string $nesRomFilename)
+    public function load(string $nesRomFilename): void
     {
         if (!is_file($nesRomFilename)) {
             throw new RuntimeException('Nes ROM file not found.');
@@ -139,7 +106,7 @@ class Nes
     /**
      * @throws Exception
      */
-    public function frame()
+    public function frame(): void
     {
         while (true) {
             $cycle = 0;
@@ -161,14 +128,14 @@ class Nes
     /**
      * @throws Exception
      */
-    public function start()
+    public function start(): void
     {
         do {
             $this->frame();
         } while (true);
     }
 
-    public function close()
+    public function close(): void
     {
     }
 }

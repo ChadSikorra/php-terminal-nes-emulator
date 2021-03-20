@@ -132,8 +132,14 @@ class Ppu
 
     public bool $isHorizontalMirror;
 
+    /**
+     * @var array<int, array>
+     */
     private array $defaultSpriteBuffer;
 
+    /**
+     * @var array<int, array>
+     */
     private array $spriteCache = [[]];
 
     public function __construct(PpuBus $bus, Interrupts $interrupts, bool $isHorizontalMirror)
@@ -170,6 +176,9 @@ class Ppu
         return $this->registers[0x00] & 0x03;
     }
 
+    /**
+     * @return int[]
+     */
     public function getPalette(): array
     {
         return $this->palette->read();
@@ -335,6 +344,9 @@ class Ppu
         return null;
     }
 
+    /**
+     * @param int[] $characterRam
+     */
     public function buildTile(int $tileX, int $tileY, int $offset, array $characterRam): Tile
     {
         // INFO see. http://hp.vector.co.jp/authors/VA042397/nes/ppu.html
@@ -390,6 +402,10 @@ class Ppu
         }
     }
 
+    /**
+     * @param int[] $characterRam
+     * @return array<int[]>
+     */
     public function buildSprite(int $spriteId, int $offset, array $characterRam): array
     {
         if (isset($this->spriteCache[$spriteId][$offset])) {
@@ -417,7 +433,7 @@ class Ppu
         return $this->bus->readByPpu($addr);
     }
 
-    public function writeCharacterRAM(int $addr, int $data)
+    public function writeCharacterRAM(int $addr, int $data): void
     {
         if ($addr >= 0x1000) {
             $offset = 0x1000;
@@ -507,7 +523,7 @@ class Ppu
         ++$this->spriteRamAddr;
     }
 
-    public function writeScrollData($data): void
+    public function writeScrollData(int $data): void
     {
         if ($this->isHorizontalScroll) {
             $this->isHorizontalScroll = false;
@@ -538,7 +554,7 @@ class Ppu
             : $this->vramAddr - 0x2000;
     }
 
-    public function writeVramData(int $data)
+    public function writeVramData(int $data): void
     {
         if ($this->vramAddr >= 0x2000) {
             if ($this->vramAddr >= 0x3f00 && $this->vramAddr < 0x4000) {

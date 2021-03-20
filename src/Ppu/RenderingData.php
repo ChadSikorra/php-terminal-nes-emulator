@@ -5,7 +5,7 @@ namespace Nes\Ppu;
 class RenderingData
 {
     /**
-     * @var array<int, array>
+     * @var int[]
      */
     public array $palette;
 
@@ -20,7 +20,7 @@ class RenderingData
     public array $sprites;
 
     /**
-     * @param array<int, array>     $palette
+     * @param int[]     $palette
      * @param Tile[]                $background
      * @param SpriteWithAttribute[] $sprites
      */

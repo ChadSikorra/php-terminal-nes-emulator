@@ -4,6 +4,9 @@ namespace Nes;
 
 class Debugger
 {
+    /**
+     * @param int[] $array
+     */
     public static function dump(array $array): void
     {
         foreach ($array as $idx => $byte) {

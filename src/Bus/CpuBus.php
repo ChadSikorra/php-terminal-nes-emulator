@@ -29,7 +29,7 @@ class CpuBus
         $this->use_mirror = $this->programRom->size() <= 0x4000;
     }
 
-    public function readByCpu($addr): int
+    public function readByCpu(int $addr): int
     {
         if ($addr >= 0xC000) {
             // Mirror, if prom block number equals 1
