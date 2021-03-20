@@ -59,7 +59,7 @@ class CpuBus
             return $this->keypad->read();
         }
 
-        return false;
+        return 0;
     }
 
     public function writeByCpu(int $addr, int $data)
