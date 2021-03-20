@@ -668,7 +668,7 @@ class Cpu
                 break;
 
             default:
-                throw new Exception(sprintf('Unknown opecode %s detected.', $baseName));
+                throw new Exception(sprintf('Unknown opcode %s detected.', $ocp->baseType));
         }
     }
 
