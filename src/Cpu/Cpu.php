@@ -200,71 +200,71 @@ class Cpu
     {
         $this->hasBranched = false;
         switch ($ocp->baseType) {
-            case Opcode::BASE_LDA:
+            case OpCode::BASE_LDA:
                 $this->registers->a = (Addressing::Immediate == $ocp->mode) ? $addrOrData : $this->readByte($addrOrData);
                 $this->registers->p->negative = (bool) ($this->registers->a & 0x80);
                 $this->registers->p->zero = !$this->registers->a;
 
                 break;
-            case Opcode::BASE_LDX:
+            case OpCode::BASE_LDX:
                 $this->registers->x = (Addressing::Immediate == $ocp->mode) ? $addrOrData : $this->readByte($addrOrData);
                 $this->registers->p->negative = (bool) ($this->registers->x & 0x80);
                 $this->registers->p->zero = !$this->registers->x;
 
                 break;
-            case Opcode::BASE_LDY:
+            case OpCode::BASE_LDY:
                 $this->registers->y = (Addressing::Immediate == $ocp->mode) ? $addrOrData : $this->readByte($addrOrData);
                 $this->registers->p->negative = (bool) ($this->registers->y & 0x80);
                 $this->registers->p->zero = !$this->registers->y;
 
                 break;
-            case Opcode::BASE_STA:
+            case OpCode::BASE_STA:
                 $this->write($addrOrData, $this->registers->a);
 
                 break;
-            case Opcode::BASE_STX:
+            case OpCode::BASE_STX:
                 $this->write($addrOrData, $this->registers->x);
 
                 break;
-            case Opcode::BASE_STY:
+            case OpCode::BASE_STY:
                 $this->write($addrOrData, $this->registers->y);
 
                 break;
-            case Opcode::BASE_TAX:
+            case OpCode::BASE_TAX:
                 $this->registers->x = $this->registers->a;
                 $this->registers->p->negative = (bool) ($this->registers->x & 0x80);
                 $this->registers->p->zero = !$this->registers->x;
 
                 break;
-            case Opcode::BASE_TAY:
+            case OpCode::BASE_TAY:
                 $this->registers->y = $this->registers->a;
                 $this->registers->p->negative = (bool) ($this->registers->y & 0x80);
                 $this->registers->p->zero = !$this->registers->y;
 
                 break;
-            case Opcode::BASE_TSX:
+            case OpCode::BASE_TSX:
                 $this->registers->x = $this->registers->sp & 0xFF;
                 $this->registers->p->negative = (bool) ($this->registers->x & 0x80);
                 $this->registers->p->zero = !$this->registers->x;
 
                 break;
-            case Opcode::BASE_TXA:
+            case OpCode::BASE_TXA:
                 $this->registers->a = $this->registers->x;
                 $this->registers->p->negative = (bool) ($this->registers->a & 0x80);
                 $this->registers->p->zero = !$this->registers->a;
 
                 break;
-            case Opcode::BASE_TXS:
+            case OpCode::BASE_TXS:
                 $this->registers->sp = $this->registers->x + 0x0100;
 
                 break;
-            case Opcode::BASE_TYA:
+            case OpCode::BASE_TYA:
                 $this->registers->a = $this->registers->y;
                 $this->registers->p->negative = (bool) ($this->registers->a & 0x80);
                 $this->registers->p->zero = !$this->registers->a;
 
                 break;
-            case Opcode::BASE_ADC:
+            case OpCode::BASE_ADC:
                 $data = (Addressing::Immediate == $ocp->mode) ? $addrOrData : $this->readByte($addrOrData);
                 $operated = $data + $this->registers->a + $this->registers->p->carry;
                 $overflow = (!((($this->registers->a ^ $data) & 0x80) != 0)
@@ -276,7 +276,7 @@ class Cpu
                 $this->registers->a = $operated & 0xFF;
 
                 break;
-            case Opcode::BASE_AND:
+            case OpCode::BASE_AND:
                 $data = (Addressing::Immediate == $ocp->mode) ? $addrOrData : $this->readByte($addrOrData);
                 $operated = $data & $this->registers->a;
                 $this->registers->p->negative = (bool) ($operated & 0x80);
@@ -284,7 +284,7 @@ class Cpu
                 $this->registers->a = $operated & 0xFF;
 
                 break;
-            case Opcode::BASE_ASL:
+            case OpCode::BASE_ASL:
                 if (Addressing::Accumulator == $ocp->mode) {
                     $acc = $this->registers->a;
                     $this->registers->p->carry = (bool) ($acc & 0x80);
@@ -301,14 +301,14 @@ class Cpu
                 }
 
                 break;
-            case Opcode::BASE_BIT:
+            case OpCode::BASE_BIT:
                 $data = $this->readByte($addrOrData);
                 $this->registers->p->negative = (bool) ($data & 0x80);
                 $this->registers->p->overflow = (bool) ($data & 0x40);
                 $this->registers->p->zero = !($this->registers->a & $data);
 
                 break;
-            case Opcode::BASE_CMP:
+            case OpCode::BASE_CMP:
                 $data = (Addressing::Immediate == $ocp->mode) ? $addrOrData : $this->readByte($addrOrData);
                 $compared = $this->registers->a - $data;
                 $this->registers->p->carry = $compared >= 0;
@@ -316,7 +316,7 @@ class Cpu
                 $this->registers->p->zero = !($compared & 0xff);
 
                 break;
-            case Opcode::BASE_CPX:
+            case OpCode::BASE_CPX:
                 $data = (Addressing::Immediate == $ocp->mode) ? $addrOrData : $this->readByte($addrOrData);
                 $compared = $this->registers->x - $data;
                 $this->registers->p->carry = $compared >= 0;
@@ -324,7 +324,7 @@ class Cpu
                 $this->registers->p->zero = !($compared & 0xff);
 
                 break;
-            case Opcode::BASE_CPY:
+            case OpCode::BASE_CPY:
                 $data = (Addressing::Immediate == $ocp->mode) ? $addrOrData : $this->readByte($addrOrData);
                 $compared = $this->registers->y - $data;
                 $this->registers->p->carry = $compared >= 0;
@@ -332,26 +332,26 @@ class Cpu
                 $this->registers->p->zero = !($compared & 0xff);
 
                 break;
-            case Opcode::BASE_DEC:
+            case OpCode::BASE_DEC:
                 $data = ($this->readByte($addrOrData) - 1) & 0xFF;
                 $this->registers->p->negative = (bool) ($data & 0x80);
                 $this->registers->p->zero = !$data;
                 $this->write($addrOrData, $data);
 
                 break;
-            case Opcode::BASE_DEX:
+            case OpCode::BASE_DEX:
                 $this->registers->x = ($this->registers->x - 1) & 0xFF;
                 $this->registers->p->negative = (bool) ($this->registers->x & 0x80);
                 $this->registers->p->zero = !$this->registers->x;
 
                 break;
-            case Opcode::BASE_DEY:
+            case OpCode::BASE_DEY:
                 $this->registers->y = ($this->registers->y - 1) & 0xFF;
                 $this->registers->p->negative = (bool) ($this->registers->y & 0x80);
                 $this->registers->p->zero = !$this->registers->y;
 
                 break;
-            case Opcode::BASE_EOR:
+            case OpCode::BASE_EOR:
                 $data = (Addressing::Immediate == $ocp->mode) ? $addrOrData : $this->readByte($addrOrData);
                 $operated = $data ^ $this->registers->a;
                 $this->registers->p->negative = (bool) ($operated & 0x80);
@@ -359,26 +359,26 @@ class Cpu
                 $this->registers->a = $operated & 0xFF;
 
                 break;
-            case Opcode::BASE_INC:
+            case OpCode::BASE_INC:
                 $data = ($this->readByte($addrOrData) + 1) & 0xFF;
                 $this->registers->p->negative = (bool) ($data & 0x80);
                 $this->registers->p->zero = !$data;
                 $this->write($addrOrData, $data);
 
                 break;
-            case Opcode::BASE_INX:
+            case OpCode::BASE_INX:
                 $this->registers->x = ($this->registers->x + 1) & 0xFF;
                 $this->registers->p->negative = (bool) ($this->registers->x & 0x80);
                 $this->registers->p->zero = !$this->registers->x;
 
                 break;
-            case Opcode::BASE_INY:
+            case OpCode::BASE_INY:
                 $this->registers->y = ($this->registers->y + 1) & 0xFF;
                 $this->registers->p->negative = (bool) ($this->registers->y & 0x80);
                 $this->registers->p->zero = !$this->registers->y;
 
                 break;
-            case Opcode::BASE_LSR:
+            case OpCode::BASE_LSR:
                 if (Addressing::Accumulator == $ocp->mode) {
                     $acc = $this->registers->a & 0xFF;
                     $this->registers->p->carry = (bool) ($acc & 0x01);
@@ -393,7 +393,7 @@ class Cpu
                 $this->registers->p->negative = false;
 
                 break;
-            case Opcode::BASE_ORA:
+            case OpCode::BASE_ORA:
                 $data = (Addressing::Immediate == $ocp->mode) ? $addrOrData : $this->readByte($addrOrData);
                 $operated = $data | $this->registers->a;
                 $this->registers->p->negative = (bool) ($operated & 0x80);
@@ -401,7 +401,7 @@ class Cpu
                 $this->registers->a = $operated & 0xFF;
 
                 break;
-            case Opcode::BASE_ROL:
+            case OpCode::BASE_ROL:
                 if (Addressing::Accumulator == $ocp->mode) {
                     $acc = $this->registers->a;
                     $this->registers->a = ($acc << 1) & 0xFF | ($this->registers->p->carry ? 0x01 : 0x00);
@@ -418,7 +418,7 @@ class Cpu
                 }
 
                 break;
-            case Opcode::BASE_ROR:
+            case OpCode::BASE_ROR:
                 if (Addressing::Accumulator == $ocp->mode) {
                     $acc = $this->registers->a;
                     $this->registers->a = $acc >> 1 | ($this->registers->p->carry ? 0x80 : 0x00);
@@ -435,7 +435,7 @@ class Cpu
                 }
 
                 break;
-            case Opcode::BASE_SBC:
+            case OpCode::BASE_SBC:
                 $data = (Addressing::Immediate == $ocp->mode) ? $addrOrData : $this->readByte($addrOrData);
                 $operated = $this->registers->a - $data - ($this->registers->p->carry ? 0 : 1);
                 $overflow = ((($this->registers->a ^ $operated) & 0x80) != 0
@@ -447,125 +447,125 @@ class Cpu
                 $this->registers->a = $operated & 0xFF;
 
                 break;
-            case Opcode::BASE_PHA:
+            case OpCode::BASE_PHA:
                 $this->push($this->registers->a);
 
                 break;
-            case Opcode::BASE_PHP:
+            case OpCode::BASE_PHP:
                 $this->registers->p->break_mode = true;
                 $this->pushStatus();
 
                 break;
-            case Opcode::BASE_PLA:
+            case OpCode::BASE_PLA:
                 $this->registers->a = $this->pop();
                 $this->registers->p->negative = (bool) ($this->registers->a & 0x80);
                 $this->registers->p->zero = !$this->registers->a;
 
                 break;
-            case Opcode::BASE_PLP:
+            case OpCode::BASE_PLP:
                 $this->popStatus();
                 $this->registers->p->reserved = true;
 
                 break;
-            case Opcode::BASE_JMP:
+            case OpCode::BASE_JMP:
                 $this->registers->pc = $addrOrData;
 
                 break;
-            case Opcode::BASE_JSR:
+            case OpCode::BASE_JSR:
                 $pc = $this->registers->pc - 1;
                 $this->push(($pc >> 8) & 0xFF);
                 $this->push($pc & 0xFF);
                 $this->registers->pc = $addrOrData;
 
                 break;
-            case Opcode::BASE_RTS:
+            case OpCode::BASE_RTS:
                 $this->popPC();
                 ++$this->registers->pc;
 
                 break;
-            case Opcode::BASE_RTI:
+            case OpCode::BASE_RTI:
                 $this->popStatus();
                 $this->popPC();
                 $this->registers->p->reserved = true;
 
                 break;
-            case Opcode::BASE_BCC:
+            case OpCode::BASE_BCC:
                 if (!$this->registers->p->carry) {
                     $this->branch($addrOrData);
                 }
 
                 break;
-            case Opcode::BASE_BCS:
+            case OpCode::BASE_BCS:
                 if ($this->registers->p->carry) {
                     $this->branch($addrOrData);
                 }
 
                 break;
-            case Opcode::BASE_BEQ:
+            case OpCode::BASE_BEQ:
                 if ($this->registers->p->zero) {
                     $this->branch($addrOrData);
                 }
 
                 break;
-            case Opcode::BASE_BMI:
+            case OpCode::BASE_BMI:
                 if ($this->registers->p->negative) {
                     $this->branch($addrOrData);
                 }
 
                 break;
-            case Opcode::BASE_BNE:
+            case OpCode::BASE_BNE:
                 if (!$this->registers->p->zero) {
                     $this->branch($addrOrData);
                 }
 
                 break;
-            case Opcode::BASE_BPL:
+            case OpCode::BASE_BPL:
                 if (!$this->registers->p->negative) {
                     $this->branch($addrOrData);
                 }
 
                 break;
-            case Opcode::BASE_BVS:
+            case OpCode::BASE_BVS:
                 if ($this->registers->p->overflow) {
                     $this->branch($addrOrData);
                 }
 
                 break;
-            case Opcode::BASE_BVC:
+            case OpCode::BASE_BVC:
                 if (!$this->registers->p->overflow) {
                     $this->branch($addrOrData);
                 }
 
                 break;
-            case Opcode::BASE_CLD:
+            case OpCode::BASE_CLD:
                 $this->registers->p->decimal_mode = false;
 
                 break;
-            case Opcode::BASE_CLC:
+            case OpCode::BASE_CLC:
                 $this->registers->p->carry = false;
 
                 break;
-            case Opcode::BASE_CLI:
+            case OpCode::BASE_CLI:
                 $this->registers->p->interrupt = false;
 
                 break;
-            case Opcode::BASE_CLV:
+            case OpCode::BASE_CLV:
                 $this->registers->p->overflow = false;
 
                 break;
-            case Opcode::BASE_SEC:
+            case OpCode::BASE_SEC:
                 $this->registers->p->carry = true;
 
                 break;
-            case Opcode::BASE_SEI:
+            case OpCode::BASE_SEI:
                 $this->registers->p->interrupt = true;
 
                 break;
-            case Opcode::BASE_SED:
+            case OpCode::BASE_SED:
                 $this->registers->p->decimal_mode = true;
 
                 break;
-            case Opcode::BASE_BRK:
+            case OpCode::BASE_BRK:
                 $interrupt = $this->registers->p->interrupt;
                 ++$this->registers->pc;
                 $this->push(($this->registers->pc >> 8) & 0xFF);
@@ -580,36 +580,36 @@ class Cpu
                 --$this->registers->pc;
 
                 break;
-            case Opcode::BASE_NOP:
+            case OpCode::BASE_NOP:
                 break;
             // Unofficial Opecode
-            case Opcode::BASE_NOPD:
+            case OpCode::BASE_NOPD:
                 $this->registers->pc++;
 
                 break;
-            case Opcode::BASE_NOPI:
+            case OpCode::BASE_NOPI:
                 $this->registers->pc += 2;
 
                 break;
-            case Opcode::BASE_LAX:
+            case OpCode::BASE_LAX:
                 $this->registers->a = $this->registers->x = $this->readByte($addrOrData);
                 $this->registers->p->negative = (bool) ($this->registers->a & 0x80);
                 $this->registers->p->zero = !$this->registers->a;
 
                 break;
-            case Opcode::BASE_SAX:
+            case OpCode::BASE_SAX:
                 $operated = $this->registers->a & $this->registers->x;
                 $this->write($addrOrData, $operated);
 
                 break;
-            case Opcode::BASE_DCP:
+            case OpCode::BASE_DCP:
                 $operated = ($this->readByte($addrOrData) - 1) & 0xFF;
                 $this->registers->p->negative = (bool) ((($this->registers->a - $operated) & 0x1FF) & 0x80);
                 $this->registers->p->zero = !(($this->registers->a - $operated) & 0x1FF);
                 $this->write($addrOrData, $operated);
 
                 break;
-            case Opcode::BASE_ISB:
+            case OpCode::BASE_ISB:
                 $data = ($this->readByte($addrOrData) + 1) & 0xFF;
                 $operated = (~$data & 0xFF) + $this->registers->a + $this->registers->p->carry;
                 $overflow = (!((($this->registers->a ^ $data) & 0x80) != 0)
@@ -622,7 +622,7 @@ class Cpu
                 $this->write($addrOrData, $data);
 
                 break;
-            case Opcode::BASE_SLO:
+            case OpCode::BASE_SLO:
                 $data = $this->readByte($addrOrData);
                 $this->registers->p->carry = (bool) ($data & 0x80);
                 $data = ($data << 1) & 0xFF;
@@ -632,7 +632,7 @@ class Cpu
                 $this->write($addrOrData, $data);
 
                 break;
-            case Opcode::BASE_RLA:
+            case OpCode::BASE_RLA:
                 $data = ($this->readByte($addrOrData) << 1) + $this->registers->p->carry;
                 $this->registers->p->carry = (bool) ($data & 0x100);
                 $this->registers->a = ($data & $this->registers->a) & 0xFF;
@@ -641,7 +641,7 @@ class Cpu
                 $this->write($addrOrData, $data);
 
                 break;
-            case Opcode::BASE_SRE:
+            case OpCode::BASE_SRE:
                 $data = $this->readByte($addrOrData);
                 $this->registers->p->carry = (bool) ($data & 0x01);
                 $data >>= 1;
@@ -651,7 +651,7 @@ class Cpu
                 $this->write($addrOrData, $data);
 
                 break;
-            case Opcode::BASE_RRA:
+            case OpCode::BASE_RRA:
                 $data = $this->readByte($addrOrData);
                 $carry = (bool) ($data & 0x01);
                 $data = ($data >> 1) | ($this->registers->p->carry ? 0x80 : 0x00);
