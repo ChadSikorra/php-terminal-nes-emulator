@@ -3,6 +3,7 @@
 namespace Nes\Ppu\Canvas;
 
 use Nes\Ppu\Renderer;
+use Symfony\Component\Console\Output\OutputInterface;
 
 class TerminalCanvas implements CanvasInterface
 {
@@ -73,8 +74,11 @@ class TerminalCanvas implements CanvasInterface
      */
     private array $pixelAvgCache7 = [];
 
-    public function __construct()
+    private OutputInterface $output;
+
+    public function __construct(OutputInterface $output)
     {
+        $this->output = $output;
         $this->brailleMap = [];
         for ($i = 0; $i <= 0xff; ++$i) {
             $this->brailleMap[$i] = html_entity_decode('&#'.(0x2800 | $i).';', ENT_NOQUOTES, 'UTF-8');
@@ -181,7 +185,12 @@ class TerminalCanvas implements CanvasInterface
             }
 
             $content .= sprintf('FPS: %3d - Frame Skip: %3d'.PHP_EOL, $fps, $fis).$frame;
-            echo $content;
+            $this->output->write(
+                $content,
+                false,
+                OutputInterface::OUTPUT_RAW
+            );
+
 
             $this->height = $charHeight + 1;
             $this->width = $charWidth;

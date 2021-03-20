@@ -8,7 +8,7 @@ Blog entry: https://www.hasegawa-tomoki.com/blog/2018/10/16/php-terminal-nes-emu
 
 # Requirements
 
-* PHP >= 7.0
+* PHP >= 8.0
 * Composer
 
 # Install
@@ -24,7 +24,7 @@ $ composer install
 # Run
 
 ```
-$ php boot.php romfile.nes
+$ bin/nes romfile.nes
 ```
 
 Compatible with mapper 0 rom files.
