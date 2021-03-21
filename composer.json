@@ -33,6 +33,7 @@
       "Nes\\Test\\": "tests"
     }
   },
+  "bin": ["bin/nes"],
   "scripts": {
     "cs-check": "phpcs --colors -p --standard=PSR2 ./src ./tests",
     "cs-fix": "phpcbf --colors --standard=PSR2 ./src ./tests",
