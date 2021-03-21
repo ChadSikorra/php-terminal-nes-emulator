@@ -53,7 +53,12 @@ class Renderer
         $this->canvas = $canvas;
     }
 
-    public function shouldPixelHide(int $x, int $y): bool
+    /**
+     * @param int $x
+     * @param int $y
+     * @return bool
+     */
+    public function shouldPixelHide($x, $y): bool
     {
         $tileX = (int) ($x / 8);
         $tileY = (int) ($y / 8);
@@ -134,9 +139,12 @@ class Renderer
     }
 
     /**
+     * @param Tile $tile
+     * @param int $tileX
+     * @param int $tileY
      * @param int[] $paletteColorsMap
      */
-    public function renderTile(Tile $tile, int $tileX, int $tileY, array $paletteColorsMap): void
+    public function renderTile($tile, $tileX, $tileY, $paletteColorsMap): void
     {
         //{ sprite, paletteId, scrollX, scrollY }: Tile
         $offsetX = $tileX - ($tile->scrollX % 8);
@@ -181,9 +189,10 @@ class Renderer
     }
 
     /**
+     * @param SpriteWithAttribute $sprite
      * @param int[] $paletteColorsMap
      */
-    public function renderSprite(SpriteWithAttribute $sprite, array $paletteColorsMap): void
+    public function renderSprite($sprite, $paletteColorsMap): void
     {
         $isVerticalReverse = (bool) ($sprite->attribute & 0x80);
         $isHorizontalReverse = (bool) ($sprite->attribute & 0x40);
