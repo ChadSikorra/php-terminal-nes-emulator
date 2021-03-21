@@ -4,7 +4,8 @@ namespace Nes;
 
 use Exception;
 use Nes\Bus\CpuBus;
-use Nes\Bus\Keypad;
+use Nes\Bus\Keypad\KeypadInterface;
+use Nes\Bus\Keypad\TerminalKeypad;
 use Nes\Bus\PpuBus;
 use Nes\Bus\Ram;
 use Nes\Bus\Rom;
@@ -35,7 +36,7 @@ class Nes
 
     public ?Renderer $renderer = null;
 
-    public ?Keypad $keypad = null;
+    public ?KeypadInterface $keypad = null;
 
     public ?Dma $dma = null;
 
@@ -81,7 +82,7 @@ class Nes
         $nesRomBinary = file_get_contents($nesRomFilename);
         $nesRom = NesFile::parse($nesRomBinary);
 
-        $this->keypad = new Keypad();
+        $this->keypad = new TerminalKeypad();
         $this->ram = new Ram(2048);
         $this->characterMem = new Ram(0x4000);
         for ($i = 0; $i < count($nesRom->characterRom); ++$i) {
