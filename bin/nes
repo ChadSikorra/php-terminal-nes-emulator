@@ -1,7 +1,8 @@
 #!/usr/bin/env php
 <?php
 
-use Nes\Nes;
+use Nes\Bus\Keypad\TerminalKeypad;
+use Nes\NesFactory;
 use Nes\Ppu\Canvas\TerminalCanvas;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -20,10 +21,13 @@ $output = new StreamOutput(fopen('php://output', 'w'));
     ->setCode(function (InputInterface $input, OutputInterface $output) {
         $filename = $input->getArgument('rom');
         $canvas = new TerminalCanvas($output);
-        $nes = new Nes($canvas);
 
         try {
-            $nes->load($filename);
+            $nes = (new NesFactory())->loadFromFile(
+                    $filename,
+                new TerminalKeypad(),
+                $canvas
+            );
             $nes->start();
         } catch (Exception $e) {
             $output->writeln("<error>{$e->getMessage()}</error>");
