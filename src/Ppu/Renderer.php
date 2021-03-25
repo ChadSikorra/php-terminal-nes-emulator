@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nes\Ppu;
 
 use Nes\Ppu\Canvas\CanvasInterface;

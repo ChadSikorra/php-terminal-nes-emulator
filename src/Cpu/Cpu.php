@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Nes\Cpu;
 
 use Exception;
@@ -33,7 +35,7 @@ class Cpu
 
         $opCodes = OpCode::getOpCodes();
         foreach ($opCodes as $key => $op) {
-            $this->opCodeList[hexdec($key)] = $op;
+            $this->opCodeList[hexdec((string)$key)] = $op;
         }
     }
 
