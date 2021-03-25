@@ -30,22 +30,20 @@ class Renderer
     /**
      * @var int[]
      */
-    public array $frameBuffer = [];
+    private array $frameBuffer = [];
 
     /**
      * @var Tile[]
      */
-    public array $background;
+    private array $background;
 
-    public int $serial = 0;
+    private CanvasInterface $canvas;
 
-    public CanvasInterface $canvas;
+    private int $currentSecond = 0;
 
-    protected int $currentSecond = 0;
+    private int $framesInSecond = 0;
 
-    protected int $framesInSecond = 0;
-
-    protected int $fps = 0;
+    private int $fps = 0;
 
     public function __construct(CanvasInterface $canvas)
     {

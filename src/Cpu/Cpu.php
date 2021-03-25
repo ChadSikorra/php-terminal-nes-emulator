@@ -11,18 +11,18 @@ use Nes\Debugger;
 
 class Cpu
 {
-    public Registers $registers;
+    private Registers $registers;
 
-    public bool $hasBranched;
+    private bool $hasBranched;
 
-    public CpuBus $bus;
+    private CpuBus $bus;
 
     /**
      * @var OpCodeProps[]
      */
-    public array $opCodeList;
+    private array $opCodeList;
 
-    public Interrupts $interrupts;
+    private Interrupts $interrupts;
 
     public function __construct(CpuBus $bus, Interrupts $interrupts)
     {

@@ -9,13 +9,13 @@ use Nes\Ppu\Ppu;
 
 class Dma
 {
-    public bool $isProcessing = false;
+    private bool $isProcessing = false;
 
-    public int $ramAddr = 0x0000;
+    private int $ramAddr = 0x0000;
 
-    public Ram $ram;
+    private Ram $ram;
 
-    public Ppu $ppu;
+    private Ppu $ppu;
 
     public function __construct(Ram $ram, Ppu $ppu)
     {

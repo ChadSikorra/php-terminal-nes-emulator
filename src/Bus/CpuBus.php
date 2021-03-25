@@ -18,7 +18,7 @@ class CpuBus
 
     public KeypadInterface $keypad;
 
-    public Dma $dma;
+    private Dma $dma;
 
     private bool $use_mirror;
 

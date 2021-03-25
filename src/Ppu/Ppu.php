@@ -93,25 +93,25 @@ class Ppu
      */
     public array $registers;
 
-    public int $cycle;
+    private int $cycle;
 
-    public int $line;
+    private int $line;
 
-    public bool $isValidVramAddr;
+    private bool $isValidVramAddr;
 
-    public bool $isLowerVramAddr;
+    private bool $isLowerVramAddr;
 
-    public int $spriteRamAddr;
+    private int $spriteRamAddr;
 
-    public int $vramAddr;
+    private int $vramAddr;
 
-    public Ram $vram;
+    private Ram $vram;
 
-    public int $vramReadBuf;
+    private int $vramReadBuf;
 
-    public Ram $spriteRam;
+    private Ram $spriteRam;
 
-    public PpuBus $bus;
+    private PpuBus $bus;
 
     /**
      * @var Tile[]
@@ -121,19 +121,19 @@ class Ppu
     /**
      * @var SpriteWithAttribute[]
      */
-    public array $sprites;
+    private array $sprites;
 
-    public Palette $palette;
+    private Palette $palette;
 
-    public Interrupts $interrupts;
+    private Interrupts $interrupts;
 
-    public bool $isHorizontalScroll;
+    private bool $isHorizontalScroll;
 
-    public int $scrollX;
+    private int $scrollX;
 
-    public int $scrollY;
+    private int $scrollY;
 
-    public bool $isHorizontalMirror;
+    private bool $isHorizontalMirror;
 
     /**
      * @var array<int, array>
