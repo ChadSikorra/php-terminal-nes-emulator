@@ -5,56 +5,42 @@ declare(strict_types=1);
 namespace Nes;
 
 use Exception;
-use Nes\Bus\CpuBus;
 use Nes\Bus\Keypad\KeypadInterface;
-use Nes\Bus\Keypad\TerminalKeypad;
-use Nes\Bus\PpuBus;
-use Nes\Bus\Ram;
-use Nes\Bus\Rom;
 use Nes\Cpu\Cpu;
 use Nes\Cpu\Dma;
-use Nes\Cpu\Interrupts;
-use Nes\NesFile\NesFile;
-use Nes\Ppu\Canvas\CanvasInterface;
 use Nes\Ppu\Ppu;
 use Nes\Ppu\Renderer;
-use RuntimeException;
 
 class Nes
 {
-    public ?Cpu $cpu = null;
+    private Cpu $cpu;
 
-    public ?Ppu $ppu = null;
+    private Ppu $ppu;
 
-    public ?CpuBus $cpuBus = null;
+    private Renderer $renderer;
 
-    public ?Ram $characterMem = null;
+    private KeypadInterface $keypad;
 
-    public ?Rom $programRom = null;
-
-    public ?Ram $ram = null;
-
-    public ?PpuBus $ppuBus = null;
-
-    public ?Renderer $renderer = null;
-
-    public ?KeypadInterface $keypad = null;
-
-    public ?Dma $dma = null;
-
-    public ?Interrupts $interrupts = null;
-
-    public ?Debugger $debugger = null;
+    private Dma $dma;
 
     /**
      * @var int[]
      */
     public array $frame;
 
-    public function __construct(CanvasInterface $canvas)
-    {
+    public function __construct(
+        Ppu $ppu,
+        Dma $dma,
+        Cpu $cpu,
+        Renderer $renderer,
+        KeypadInterface $keypad,
+    ) {
+        $this->ppu = $ppu;
+        $this->dma = $dma;
+        $this->cpu = $cpu;
+        $this->keypad = $keypad;
         $this->frame = [];
-        $this->renderer = new Renderer($canvas);
+        $this->renderer = $renderer;
     }
 
     //
@@ -76,39 +62,6 @@ class Nes
     /**
      * @throws Exception
      */
-    public function load(string $nesRomFilename): void
-    {
-        if (!is_file($nesRomFilename)) {
-            throw new RuntimeException('Nes ROM file not found.');
-        }
-        $nesRomBinary = file_get_contents($nesRomFilename);
-        $nesRom = NesFile::parse($nesRomBinary);
-
-        $this->keypad = new TerminalKeypad();
-        $this->ram = new Ram(2048);
-        $this->characterMem = new Ram(0x4000);
-        for ($i = 0; $i < count($nesRom->characterRom); ++$i) {
-            $this->characterMem->write($i, $nesRom->characterRom[$i]);
-        }
-        $this->programRom = new Rom($nesRom->programRom);
-        $this->ppuBus = new PpuBus($this->characterMem);
-        $this->interrupts = new Interrupts();
-        $this->ppu = new Ppu($this->ppuBus, $this->interrupts, $nesRom->isHorizontalMirror);
-        $this->dma = new Dma($this->ram, $this->ppu);
-        $this->cpuBus = new CpuBus(
-            $this->ram,
-            $this->programRom,
-            $this->ppu,
-            $this->keypad,
-            $this->dma
-        );
-        $this->cpu = new Cpu($this->cpuBus, $this->interrupts);
-        $this->cpu->reset();
-    }
-
-    /**
-     * @throws Exception
-     */
     public function frame(): void
     {
         while (true) {
@@ -120,7 +73,7 @@ class Nes
             $cycle += $this->cpu->run();
             $renderingData = $this->ppu->run($cycle * 3);
             if ($renderingData) {
-                $this->cpu->bus->keypad->fetch();
+                $this->keypad->fetch();
                 $this->renderer->render($renderingData);
 
                 break;
