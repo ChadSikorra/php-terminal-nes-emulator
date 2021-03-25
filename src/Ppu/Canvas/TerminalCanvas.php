@@ -9,18 +9,18 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class TerminalCanvas implements CanvasInterface
 {
-    public int $threshold = 127;
+    private int $threshold = 127;
 
-    protected int $height = 0;
+    private int $height = 0;
 
-    protected string $lastFrame;
+    private string $lastFrame;
 
     /**
      * @var int[]
      */
-    protected array $lastFrameCanvasBuffer = [];
+    private array $lastFrameCanvasBuffer = [];
 
-    protected int $width = 0;
+    private int $width = 0;
 
     /**
      * Braille Pixel Matrix.
@@ -80,7 +80,7 @@ class TerminalCanvas implements CanvasInterface
 
     public function __construct(OutputInterface $output)
     {
-        $this->output = $output;
+        $this->output = $output ?? '';
         $this->brailleMap = [];
         for ($i = 0; $i <= 0xff; ++$i) {
             $this->brailleMap[$i] = html_entity_decode('&#'.(0x2800 | $i).';', ENT_NOQUOTES, 'UTF-8');
