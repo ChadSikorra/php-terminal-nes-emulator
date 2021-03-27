@@ -16,6 +16,7 @@ use Nes\NesFile\NesFile;
 use Nes\Ppu\Canvas\CanvasInterface;
 use Nes\Ppu\Ppu;
 use Nes\Ppu\Renderer;
+use Nes\Throttle\PhpThrottle;
 use RuntimeException;
 
 class NesFactory
@@ -53,6 +54,7 @@ class NesFactory
             $dma,
             $cpu,
             new Renderer($canvas),
+            new PhpThrottle(),
             $keypad
         );
     }

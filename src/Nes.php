@@ -10,6 +10,7 @@ use Nes\Cpu\Cpu;
 use Nes\Cpu\Dma;
 use Nes\Ppu\Ppu;
 use Nes\Ppu\Renderer;
+use Nes\Throttle\ThrottleInterface;
 
 class Nes
 {
@@ -23,6 +24,8 @@ class Nes
 
     private Dma $dma;
 
+    private ThrottleInterface $throttle;
+
     /**
      * @var int[]
      */
@@ -33,6 +36,7 @@ class Nes
         Dma $dma,
         Cpu $cpu,
         Renderer $renderer,
+        ThrottleInterface $throttle,
         KeypadInterface $keypad,
     ) {
         $this->ppu = $ppu;
@@ -41,6 +45,7 @@ class Nes
         $this->keypad = $keypad;
         $this->frame = [];
         $this->renderer = $renderer;
+        $this->throttle = $throttle;
     }
 
     //
@@ -87,11 +92,7 @@ class Nes
     public function start(): void
     {
         do {
-            $this->frame();
+            $this->throttle->throttle(fn() => $this->frame());
         } while (true);
-    }
-
-    public function close(): void
-    {
     }
 }

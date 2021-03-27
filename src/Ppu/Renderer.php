@@ -103,13 +103,11 @@ class Renderer
             }
         }
 
-        if ($this->framesInSecond < 61) {
-            $this->canvas->draw(
-                $this->frameBuffer,
-                $this->fps,
-                $this->framesInSecond
-            );
-        }
+        $this->canvas->draw(
+            $this->frameBuffer,
+            $this->fps,
+            $this->framesInSecond
+        );
     }
 
     /**
