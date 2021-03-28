@@ -32,37 +32,24 @@ class PngCanvas implements CanvasInterface
 
     public function draw(array $frameBuffer, int $fps, int $fis): void
     {
-        for ($y = 0; $y < 224; ++$y) {
+        for ($y = 0; $y < 224; $y++) {
             $y_x_100 = $y * 0x100;
-            for ($x = 0; $x < 256; ++$x) {
-                $color = $this->getColor($frameBuffer, $x, $y_x_100);
-                imagesetpixel($this->image, $x, $y, $color);
+            for ($x = 0; $x < 256; $x++) {
+                $index = ($x + $y_x_100);
+                if (!isset($this->colorCache[$frameBuffer[$index]])) {
+                    $this->colorCache[$frameBuffer[$index]] = imagecolorallocate(
+                        $this->image,
+                        ($frameBuffer[$index] >> 16) & 0xff,
+                        ($frameBuffer[$index] >> 8) & 0xff,
+                        $frameBuffer[$index] & 0xff
+                    );
+                }
+                imagesetpixel($this->image, $x, $y, $this->colorCache[$frameBuffer[$index]]);
             }
         }
         if (!is_dir('screen')) {
             mkdir('screen');
         }
         imagepng($this->image, sprintf('screen/%08d.png', $this->serial++));
-    }
-
-    /**
-     * @param int[] $frameBuffer
-     */
-    private function getColor(array $frameBuffer, int $x, int $y_x_100): int
-    {
-        $index = ($x + $y_x_100);
-        if (!isset($this->colorCache[$frameBuffer[$index]])) {
-            $blue = $frameBuffer[$index] & 0xff;
-            $green = ($frameBuffer[$index] >> 8) & 0xff;
-            $red = ($frameBuffer[$index] >> 16) & 0xff;
-            $this->colorCache[$frameBuffer[$index]] = imagecolorallocate(
-                $this->image,
-                $red,
-                $green,
-                $blue
-            );
-        }
-
-        return $this->colorCache[$frameBuffer[$index]];
     }
 }
