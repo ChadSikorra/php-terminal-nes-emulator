@@ -24,7 +24,7 @@ class PhpThrottle implements ThrottleInterface
         $invoke();
 
         // @TODO Still something wrong below. 300 should not be correct. Logic seems wrong...
-        $sleepTime = $this->timePerFrame - (microtime(true) - $this->startedAt);
+        $sleepTime = (int)round(($this->timePerFrame - (microtime(true) - $this->startedAt)));
         if($sleepTime > 0) {
             usleep((int)ceil($sleepTime * 300));
             $this->startedAt = microtime(true);
