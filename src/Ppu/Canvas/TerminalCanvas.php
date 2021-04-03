@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Nes\Ppu\Canvas;
 
-use Nes\Ppu\Renderer;
+use Nes\Ppu\Renderer\Renderer;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class TerminalCanvas implements CanvasInterface

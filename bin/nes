@@ -4,6 +4,7 @@
 use Nes\Bus\Keypad\TerminalKeypad;
 use Nes\NesFactory;
 use Nes\Ppu\Canvas\TerminalCanvas;
+use Nes\Ppu\Renderer\Renderer;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -26,7 +27,7 @@ $output = new StreamOutput(fopen('php://output', 'w'));
             $nes = (new NesFactory())->loadFromFile(
                     $filename,
                 new TerminalKeypad(),
-                $canvas
+                new Renderer($canvas)
             );
             $nes->start();
         } catch (Exception $e) {

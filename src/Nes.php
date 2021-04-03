@@ -9,7 +9,7 @@ use Nes\Bus\Keypad\KeypadInterface;
 use Nes\Cpu\Cpu;
 use Nes\Cpu\Dma;
 use Nes\Ppu\Ppu;
-use Nes\Ppu\Renderer;
+use Nes\Ppu\Renderer\RendererInterface;
 use Nes\Throttle\ThrottleInterface;
 
 class Nes
@@ -18,7 +18,7 @@ class Nes
 
     private Ppu $ppu;
 
-    private Renderer $renderer;
+    private RendererInterface $renderer;
 
     private KeypadInterface $keypad;
 
@@ -35,7 +35,7 @@ class Nes
         Ppu $ppu,
         Dma $dma,
         Cpu $cpu,
-        Renderer $renderer,
+        RendererInterface $renderer,
         ThrottleInterface $throttle,
         KeypadInterface $keypad,
     ) {

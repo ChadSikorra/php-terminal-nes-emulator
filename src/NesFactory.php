@@ -13,18 +13,19 @@ use Nes\Cpu\Cpu;
 use Nes\Cpu\Dma;
 use Nes\Cpu\Interrupts;
 use Nes\NesFile\NesFile;
-use Nes\Ppu\Canvas\CanvasInterface;
 use Nes\Ppu\Ppu;
-use Nes\Ppu\Renderer;
+use Nes\Ppu\Renderer\RendererInterface;
 use Nes\Throttle\PhpThrottle;
+use Nes\Throttle\ThrottleInterface;
 use RuntimeException;
 
 class NesFactory
 {
     public function loadFromRomBinary(
         string $nesRomBinary,
-        ?KeypadInterface $keypad = null,
-        ?CanvasInterface $canvas = null,
+        KeypadInterface $keypad,
+        RendererInterface $renderer,
+        ?ThrottleInterface $throttle = null,
     ): Nes {
         $nesRom = NesFile::parse($nesRomBinary);
 
@@ -44,7 +45,7 @@ class NesFactory
             $programRom,
             $ppu,
             $keypad,
-            $dma
+            $dma,
         );
         $cpu = new Cpu($cpuBus, $interrupts);
         $cpu->reset();
@@ -53,16 +54,17 @@ class NesFactory
             $ppu,
             $dma,
             $cpu,
-            new Renderer($canvas),
-            new PhpThrottle(),
-            $keypad
+            $renderer,
+            $throttle ?? new PhpThrottle(),
+            $keypad,
         );
     }
 
     public function loadFromFile(
         string $nesRomFilename,
         KeypadInterface $keypad,
-        CanvasInterface $canvas,
+        RendererInterface $renderer,
+        ?ThrottleInterface $throttle = null,
     ): Nes {
         if (!is_file($nesRomFilename)) {
             throw new RuntimeException('Nes ROM file not found.');
@@ -72,7 +74,8 @@ class NesFactory
         return $this->loadFromRomBinary(
             $nesRomBinary,
             $keypad,
-            $canvas
+            $renderer,
+            $throttle,
         );
     }
 }

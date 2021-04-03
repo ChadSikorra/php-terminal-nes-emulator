@@ -2,31 +2,15 @@
 
 declare(strict_types=1);
 
-namespace Nes\Ppu;
+namespace Nes\Ppu\Renderer;
 
 use Nes\Ppu\Canvas\CanvasInterface;
+use Nes\Ppu\RenderingData;
+use Nes\Ppu\SpriteWithAttribute;
+use Nes\Ppu\Tile;
 
-class Renderer
+class Renderer implements RendererInterface
 {
-    public const COLORS = [
-        0x808080, 0x003DA6, 0x0012B0, 0x440096,
-        0xA1005E, 0xC70028, 0xBA0600, 0x8C1700,
-        0x5C2F00, 0x104500, 0x054A00, 0x00472E,
-        0x004166, 0x000000, 0x050505, 0x050505,
-        0xC7C7C7, 0x0077FF, 0x2155FF, 0x8237FA,
-        0xEB2FB5, 0xFF2950, 0xFF2200, 0xD63200,
-        0xC46200, 0x358000, 0x058F00, 0x008A55,
-        0x0099CC, 0x212121, 0x090909, 0x090909,
-        0xFFFFFF, 0x0FD7FF, 0x69A2FF, 0xD480FF,
-        0xFF45F3, 0xFF618B, 0xFF8833, 0xFF9C12,
-        0xFABC20, 0x9FE30E, 0x2BF035, 0x0CF0A4,
-        0x05FBFF, 0x5E5E5E, 0x0D0D0D, 0x0D0D0D,
-        0xFFFFFF, 0xA6FCFF, 0xB3ECFF, 0xDAABEB,
-        0xFFA8F9, 0xFFABB3, 0xFFD2B0, 0xFFEFA6,
-        0xFFF79C, 0xD7E895, 0xA6EDAF, 0xA2F2DA,
-        0x99FFFC, 0xDDDDDD, 0x111111, 0x111111,
-    ];
-
     /**
      * @var int[]
      */
@@ -51,29 +35,6 @@ class Renderer
         $this->frameBuffer = array_fill(0, 256 * 256, 0);
 
         $this->canvas = $canvas;
-    }
-
-    /**
-     * @param int $x
-     * @param int $y
-     * @return bool
-     */
-    public function shouldPixelHide($x, $y): bool
-    {
-        $tileX = (int) ($x / 8);
-        $tileY = (int) ($y / 8);
-        $backgroundIndex = $tileY * 33 + $tileX;
-
-        $sprite = null;
-        if (isset($this->background[$backgroundIndex]) && $this->background[$backgroundIndex]->pattern) {
-            $sprite = $this->background[$backgroundIndex]->pattern;
-        }
-        if (!$sprite) {
-            return true;
-        }
-
-        // NOTE: If background pixel is not transparent, we need to hide sprite.
-        return !(($sprite[$y % 8] && $sprite[$y % 8][$x % 8] % 4) === false);
     }
 
     public function render(RenderingData $data): void
@@ -111,10 +72,33 @@ class Renderer
     }
 
     /**
+     * @param int $x
+     * @param int $y
+     * @return bool
+     */
+    private function shouldPixelHide($x, $y): bool
+    {
+        $tileX = (int) ($x / 8);
+        $tileY = (int) ($y / 8);
+        $backgroundIndex = $tileY * 33 + $tileX;
+
+        $sprite = null;
+        if (isset($this->background[$backgroundIndex]) && $this->background[$backgroundIndex]->pattern) {
+            $sprite = $this->background[$backgroundIndex]->pattern;
+        }
+        if (!$sprite) {
+            return true;
+        }
+
+        // NOTE: If background pixel is not transparent, we need to hide sprite.
+        return !(($sprite[$y % 8] && $sprite[$y % 8][$x % 8] % 4) === false);
+    }
+
+    /**
      * @param Tile[] $background
      * @param int[]  $paletteColorsMap
      */
-    public function renderBackground(array $background, array $paletteColorsMap): void
+    private function renderBackground(array $background, array $paletteColorsMap): void
     {
         $count_background = count($background);
         $this->background = $background;
@@ -129,7 +113,7 @@ class Renderer
      * @param SpriteWithAttribute[] $sprites
      * @param int[]                 $paletteColorsMap
      */
-    public function renderSprites(array $sprites, array $paletteColorsMap): void
+    private function renderSprites(array $sprites, array $paletteColorsMap): void
     {
         foreach ($sprites as $sprite) {
             $this->renderSprite($sprite, $paletteColorsMap);
@@ -142,7 +126,7 @@ class Renderer
      * @param int $tileY
      * @param int[] $paletteColorsMap
      */
-    public function renderTile($tile, $tileX, $tileY, $paletteColorsMap): void
+    private function renderTile($tile, $tileX, $tileY, $paletteColorsMap): void
     {
         //{ sprite, paletteId, scrollX, scrollY }: Tile
         $offsetX = $tileX - ($tile->scrollX % 8);
@@ -190,7 +174,7 @@ class Renderer
      * @param SpriteWithAttribute $sprite
      * @param int[] $paletteColorsMap
      */
-    public function renderSprite($sprite, $paletteColorsMap): void
+    private function renderSprite($sprite, $paletteColorsMap): void
     {
         $isVerticalReverse = (bool) ($sprite->attribute & 0x80);
         $isHorizontalReverse = (bool) ($sprite->attribute & 0x40);
