@@ -33,9 +33,7 @@ interface KeypadInterface
         self::INPUT_RIGHT => 'd',
     ];
 
-    public function read(): bool;
+    public function read(int $player): bool;
 
     public function write(int $data): void;
-
-    public function fetch(): void;
 }

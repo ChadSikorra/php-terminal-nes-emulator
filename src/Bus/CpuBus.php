@@ -51,8 +51,8 @@ class CpuBus
             $addr < 0x2000 => $this->ram->read($addr - 0x0800),
             // mirror
             $addr < 0x4000 => $this->ppu->read(($addr - 0x2000) % 8),
-            // @TODO Add 2P
-            $addr === 0x4016 => (int) $this->keypad->read(),
+            $addr === 0x4016 => (int) $this->keypad->read(1),
+            $addr === 0x4017 => (int) $this->keypad->read(2),
             default => 0,
         };
     }

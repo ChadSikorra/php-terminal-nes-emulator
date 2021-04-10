@@ -12,7 +12,7 @@ use function array_flip;
 use function array_values;
 use function stream_set_blocking;
 
-class TerminalKeypad implements KeypadInterface
+class TerminalKeypad implements KeypadInterface, KeypadFetchInterface
 {
     /**
      * @var false|resource
@@ -79,8 +79,13 @@ class TerminalKeypad implements KeypadInterface
         }
     }
 
-    public function read(): bool
+    public function read(int $player): bool
     {
+        // No 2nd player in a terminal....ignore this.
+        if ($player !== 1) {
+            return false;
+        }
+
         return (bool)$this->keyRegisters[$this->index++];
     }
 

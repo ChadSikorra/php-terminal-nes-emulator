@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nes;
 
 use Exception;
+use Nes\Bus\Keypad\KeypadFetchInterface;
 use Nes\Bus\Keypad\KeypadInterface;
 use Nes\Cpu\Cpu;
 use Nes\Cpu\Dma;
@@ -26,6 +27,8 @@ class Nes
 
     private ThrottleInterface $throttle;
 
+    private bool $shouldFetchKeyboardKeys;
+
     /**
      * @var int[]
      */
@@ -46,6 +49,7 @@ class Nes
         $this->frame = [];
         $this->renderer = $renderer;
         $this->throttle = $throttle;
+        $this->shouldFetchKeyboardKeys = ($keypad instanceof KeypadFetchInterface);
     }
 
     //
@@ -78,7 +82,9 @@ class Nes
             $cycle += $this->cpu->run();
             $renderingData = $this->ppu->run($cycle * 3);
             if ($renderingData) {
-                $this->keypad->fetch();
+                if ($this->shouldFetchKeyboardKeys) {
+                    $this->keypad->fetch();
+                }
                 $this->renderer->render($renderingData);
 
                 break;
