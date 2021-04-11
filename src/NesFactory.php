@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nes;
 
+use Nes\Apu\Apu;
 use Nes\Bus\CpuBus;
 use Nes\Bus\Keypad\KeypadInterface;
 use Nes\Bus\PpuBus;
@@ -39,11 +40,13 @@ class NesFactory
         $ppuBus = new PpuBus($characterMem);
         $interrupts = new Interrupts();
         $ppu = new Ppu($ppuBus, $interrupts, $nesRom->isHorizontalMirror);
+        $apu = new Apu();
         $dma = new Dma($ram, $ppu);
         $cpuBus = new CpuBus(
             $ram,
             $programRom,
             $ppu,
+            $apu,
             $keypad,
             $dma,
         );

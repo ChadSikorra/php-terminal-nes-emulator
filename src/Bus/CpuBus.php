@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nes\Bus;
 
+use Nes\Apu\Apu;
 use Nes\Bus\Keypad\KeypadInterface;
 use Nes\Cpu\Dma;
 use Nes\Ppu\Ppu;
@@ -16,6 +17,8 @@ class CpuBus
 
     public Ppu $ppu;
 
+    public Apu $apu;
+
     public KeypadInterface $keypad;
 
     private Dma $dma;
@@ -26,11 +29,13 @@ class CpuBus
         Ram $ram,
         Rom $programRom,
         Ppu $ppu,
+        Apu $apu,
         KeypadInterface $keypad,
         Dma $dma
     ) {
         $this->ram = $ram;
         $this->programRom = $programRom;
+        $this->apu = $apu;
         $this->ppu = $ppu;
         $this->keypad = $keypad;
         $this->dma = $dma;
@@ -40,6 +45,9 @@ class CpuBus
     public function readByCpu(int $addr): int
     {
         return match (true){
+            $addr === 0x4015 => $this->apu->read(),
+            $addr === 0x4016 => (int) $this->keypad->read(1),
+            $addr === 0x4017 => (int) $this->keypad->read(2),
             // Mirror, if prom block number equals 1
             $addr >= 0xC000 => $this->use_mirror
                 ? $this->programRom->read($addr - 0xC000)
@@ -51,8 +59,6 @@ class CpuBus
             $addr < 0x2000 => $this->ram->read($addr - 0x0800),
             // mirror
             $addr < 0x4000 => $this->ppu->read(($addr - 0x2000) % 8),
-            $addr === 0x4016 => (int) $this->keypad->read(1),
-            $addr === 0x4017 => (int) $this->keypad->read(2),
             default => 0,
         };
     }
@@ -62,22 +68,32 @@ class CpuBus
         if ($addr < 0x0800) {
             // RAM
             $this->ram->write($addr, $data);
+
+            return;
         } elseif ($addr < 0x2000) {
             // mirror
             $this->ram->write($addr - 0x0800, $data);
+
+            return;
         } elseif ($addr < 0x2008) {
             // PPU
             $this->ppu->write($addr - 0x2000, $data);
-        } elseif ($addr >= 0x4000 && $addr < 0x4020) {
-            if (0x4014 === $addr) {
+
+            return;
+        }
+
+        switch ($addr) {
+            case 0x4014:
                 $this->dma->write($data);
-            } elseif (0x4016 === $addr) {
-                // TODO Add 2P
+                break;
+            case 0x4016:
                 $this->keypad->write($data);
-            } else {
-                // APU
-                return;
-            }
+                break;
+            case $addr >= 0x4000 && $addr <= 4013:
+            case 0x4015:
+            case 0x4017:
+                $this->apu->write($addr, $data);
+                break;
         }
     }
 }

@@ -97,8 +97,6 @@ class Ppu
 
     private int $line;
 
-    private bool $isValidVramAddr;
-
     private bool $isLowerVramAddr;
 
     private int $spriteRamAddr;
@@ -150,7 +148,6 @@ class Ppu
         $this->registers = array_fill(0, 7, 0);
         $this->cycle = 0;
         $this->line = 0;
-        $this->isValidVramAddr = false;
         $this->isLowerVramAddr = false;
         $this->isHorizontalScroll = true;
         $this->vramAddr = 0x0000;
@@ -220,52 +217,51 @@ class Ppu
     }
 
 
+    /**
+     * | bit  | description                                 |
+     * +------+---------------------------------------------+
+     * | 7    | 1: VBlank clear by reading this register    |
+     * | 6    | 1: sprite hit                               |
+     * | 5    | 0: less than 8, 1: 9 or more                |
+     * | 4-0  | invalid                                     |
+     * |      | bit4 VRAM write flag [0: success, 1: fail]  |
+     */
     public function read(int $addr): int
     {
-        /*
-        | bit  | description                                 |
-        +------+---------------------------------------------+
-        | 7    | 1: VBlank clear by reading this register    |
-        | 6    | 1: sprite hit                               |
-        | 5    | 0: less than 8, 1: 9 or more                |
-        | 4-0  | invalid                                     |
-        |      | bit4 VRAM write flag [0: success, 1: fail]  |
-        */
-        if (0x0002 === $addr) {
-            $this->isHorizontalScroll = true;
-            $data = $this->registers[0x02];
-            $this->clearVblank();
-            // $this->clearSpriteHit();
-            return $data;
+        switch ($addr) {
+            case 0x0002:
+                $this->isHorizontalScroll = true;
+                $data = $this->registers[0x02];
+                $this->clearVblank();
+                // $this->clearSpriteHit();
+                return $data;
+            case 0x0004:
+                return $this->spriteRam->read($this->spriteRamAddr);
+            case 0x0007:
+                return $this->readVram();
+            default:
+                return 0;
         }
-        // Write OAM data here. Writes will increment OAMADDR after the write
-        // reads during vertical or forced blanking return the value from OAM at that address but do not increment.
-        if (0x0004 === $addr) {
-            return $this->spriteRam->read($this->spriteRamAddr);
-        }
-        if (0x0007 === $addr) {
-            return $this->readVram();
-        }
-
-        return 0;
     }
 
     public function write(int $addr, int $data): void
     {
-        if (0x0003 === $addr) {
-            $this->writeSpriteRamAddr($data);
-        }
-        if (0x0004 === $addr) {
-            $this->writeSpriteRamData($data);
-        }
-        if (0x0005 === $addr) {
-            $this->writeScrollData($data);
-        }
-        if (0x0006 === $addr) {
-            $this->writeVramAddr($data);
-        }
-        if (0x0007 === $addr) {
-            $this->writeVramData($data);
+        switch ($addr) {
+            case 0x0003:
+                $this->writeSpriteRamAddr($data);
+                break;
+            case 0x0004:
+                $this->writeSpriteRamData($data);
+                break;
+            case 0x0005:
+                $this->writeScrollData($data);
+                break;
+            case 0x0006:
+                $this->writeVramAddr($data);
+                break;
+            case 0x0007:
+                $this->writeVramData($data);
+                break;
         }
         $this->registers[$addr] = $data;
     }
@@ -558,11 +554,9 @@ class Ppu
         if ($this->isLowerVramAddr) {
             $this->vramAddr += $data;
             $this->isLowerVramAddr = false;
-            $this->isValidVramAddr = true;
         } else {
             $this->vramAddr = $data << 8;
             $this->isLowerVramAddr = true;
-            $this->isValidVramAddr = false;
         }
     }
 
