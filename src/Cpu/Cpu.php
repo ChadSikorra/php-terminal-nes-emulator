@@ -39,6 +39,25 @@ class Cpu
         }
     }
 
+    /**
+     * @throws Exception
+     */
+    public function run(): int
+    {
+        if ($this->interrupts->isNmiAssert()) {
+            $this->processNmi();
+        }
+        if ($this->interrupts->isIrqAssert()) {
+            $this->processIrq();
+        }
+        $opcode = $this->fetchByte($this->registers->pc);
+        $ocp = $this->opCodeList[$opcode];
+        list($addrOrData, $additionalCycle) = $this->getAddrOrDataWithAdditionalCycle($ocp->mode);
+        $this->execInstruction($ocp, $addrOrData);
+
+        return $ocp->cycle + $additionalCycle + ($this->hasBranched ? 1 : 0);
+    }
+
     public function reset(): void
     {
         $this->registers = Registers::getDefault();
@@ -52,7 +71,7 @@ class Cpu
      *
      * @return int[]
      */
-    public function getAddrOrDataWithAdditionalCycle(int $mode): array
+    private function getAddrOrDataWithAdditionalCycle(int $mode): array
     {
         switch ($mode) {
             case Addressing::Implied:
@@ -122,25 +141,25 @@ class Cpu
         }
     }
 
-    public function write(int $addr, int $data): void
+    private function write(int $addr, int $data): void
     {
         $this->bus->writeByCpu($addr, $data);
     }
 
-    public function push(int $data): void
+    private function push(int $data): void
     {
         $this->write(0x100 | ($this->registers->sp & 0xFF), $data);
         --$this->registers->sp;
     }
 
-    public function pop(): int
+    private function pop(): int
     {
         ++$this->registers->sp;
 
         return $this->readByte(0x100 | ($this->registers->sp & 0xFF));
     }
 
-    public function branch(int $addr): void
+    private function branch(int $addr): void
     {
         $this->registers->pc = $addr;
         $this->hasBranched = true;
@@ -159,7 +178,7 @@ class Cpu
         $this->push($status);
     }
 
-    public function popStatus(): void
+    private function popStatus(): void
     {
         $status = $this->pop();
         $this->registers->p->negative = (bool) ($status & 0x80);
@@ -172,7 +191,7 @@ class Cpu
         $this->registers->p->carry = (bool) ($status & 0x01);
     }
 
-    public function popPC(): void
+    private function popPC(): void
     {
         $this->registers->pc = $this->pop();
         $this->registers->pc += ($this->pop() << 8);
@@ -181,7 +200,7 @@ class Cpu
     /**
      * @throws Exception
      */
-    public function execInstruction(OpCodeProps $ocp, int $addrOrData): void
+    private function execInstruction(OpCodeProps $ocp, int $addrOrData): void
     {
         $this->hasBranched = false;
         switch ($ocp->baseType) {
@@ -657,7 +676,7 @@ class Cpu
         }
     }
 
-    public function processNmi(): void
+    private function processNmi(): void
     {
         $this->interrupts->deassertNmi();
         $this->registers->p->break_mode = false;
@@ -668,7 +687,7 @@ class Cpu
         $this->registers->pc = $this->readWord(0xFFFA);
     }
 
-    public function processIrq(): void
+    private function processIrq(): void
     {
         if ($this->registers->p->interrupt) {
             return;
@@ -680,25 +699,6 @@ class Cpu
         $this->pushStatus();
         $this->registers->p->interrupt = true;
         $this->registers->pc = $this->readWord(0xFFFE);
-    }
-
-    /**
-     * @throws Exception
-     */
-    public function run(): int
-    {
-        if ($this->interrupts->isNmiAssert()) {
-            $this->processNmi();
-        }
-        if ($this->interrupts->isIrqAssert()) {
-            $this->processIrq();
-        }
-        $opcode = $this->fetchByte($this->registers->pc);
-        $ocp = $this->opCodeList[$opcode];
-        list($addrOrData, $additionalCycle) = $this->getAddrOrDataWithAdditionalCycle($ocp->mode);
-        $this->execInstruction($ocp, $addrOrData);
-
-        return $ocp->cycle + $additionalCycle + ($this->hasBranched ? 1 : 0);
     }
 
     private function fetchByte(int $addr): int
