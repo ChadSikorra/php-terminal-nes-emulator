@@ -45,16 +45,10 @@ class Palette
         return $return;
     }
 
-    public function getPaletteAddr(int $addr): int
+    public function write(int $addr, int $data): void
     {
         $mirrorDowned = (($addr & 0xFF) % 0x20);
         //NOTE: 0x3f10, 0x3f14, 0x3f18, 0x3f1c is mirror of 0x3f00, 0x3f04, 0x3f08, 0x3f0c
-        return $this->isSpriteMirror($mirrorDowned) ? $mirrorDowned - 0x10 : $mirrorDowned;
-    }
-
-    public function write(int $addr, int $data): void
-    {
-        //$this->ram[$this->getPaletteAddr($addr)] = $data;
-        $this->paletteRam->write($this->getPaletteAddr($addr), $data);
+        $this->paletteRam->write($this->isSpriteMirror($mirrorDowned) ? $mirrorDowned - 0x10 : $mirrorDowned, $data);
     }
 }

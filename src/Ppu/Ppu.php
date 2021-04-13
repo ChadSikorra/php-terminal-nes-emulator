@@ -186,30 +186,31 @@ class Ppu
             ++$this->line;
 
             if ($this->hasSpriteHit()) {
-                $this->setSpriteHit();
+                $this->registers[0x02] |= 0x40;
             }
 
             if ($this->line <= 240 && 0 === $this->line % 8 && $this->scrollY <= 240) {
                 $this->buildBackground();
             }
-            if (241 === $this->line) {
-                $this->setVblank();
-                if ($this->hasVblankIrqEnabled()) {
-                    $this->interrupts->assertNmi();
-                }
-            }
 
-            if (262 === $this->line) {
-                $this->clearVblank();
-                $this->clearSpriteHit();
-                $this->line = 0;
-                $this->interrupts->deassertNmi();
+            switch ($this->line) {
+                case 241:
+                    $this->setVblank();
+                    if ($this->registers[0] & 0x80) {
+                        $this->interrupts->assertNmi();
+                    }
+                    break;
+                case 262:
+                    $this->clearVblank();
+                    $this->clearSpriteHit();
+                    $this->line = 0;
+                    $this->interrupts->deassertNmi();
 
-                return new RenderingData(
-                    $this->getPalette(),
-                    $this->isBackgroundEnable() ? $this->background : [],
-                    $this->isSpriteEnable() ? $this->sprites : []
-                );
+                    return new RenderingData(
+                        $this->getPalette(),
+                        $this->isBackgroundEnable() ? $this->background : [],
+                        $this->isSpriteEnable() ? $this->sprites : []
+                    );
             }
         }
 
@@ -238,7 +239,21 @@ class Ppu
             case 0x0004:
                 return $this->spriteRam->read($this->spriteRamAddr);
             case 0x0007:
-                return $this->readVram();
+                $buf = $this->vramReadBuf;
+
+                if ($this->vramAddr >= 0x2000) {
+                    $addr = $this->calcVramAddr();
+                    $this->vramAddr += $this->vramOffset();
+                    if ($addr >= 0x3F00) {
+                        return $this->vram->read($addr);
+                    }
+                    $this->vramReadBuf = $this->vram->read($addr);
+                } else {
+                    $this->vramReadBuf = $this->bus->readByPpu($this->vramAddr);
+                    $this->vramAddr += $this->vramOffset();
+                }
+
+                return $buf;
             default:
                 return 0;
         }
@@ -248,19 +263,43 @@ class Ppu
     {
         switch ($addr) {
             case 0x0003:
-                $this->writeSpriteRamAddr($data);
+                $this->spriteRamAddr = $data;
                 break;
             case 0x0004:
-                $this->writeSpriteRamData($data);
+                $this->spriteRam->write($this->spriteRamAddr, $data);
+                ++$this->spriteRamAddr;
                 break;
             case 0x0005:
-                $this->writeScrollData($data);
+                if ($this->isHorizontalScroll) {
+                    $this->isHorizontalScroll = false;
+                    $this->scrollX = $data & 0xFF;
+                } else {
+                    $this->scrollY = $data & 0xFF;
+                    $this->isHorizontalScroll = true;
+                }
                 break;
             case 0x0006:
-                $this->writeVramAddr($data);
+                if ($this->isLowerVramAddr) {
+                    $this->vramAddr += $data;
+                    $this->isLowerVramAddr = false;
+                } else {
+                    $this->vramAddr = $data << 8;
+                    $this->isLowerVramAddr = true;
+                }
                 break;
             case 0x0007:
-                $this->writeVramData($data);
+                if ($this->vramAddr >= 0x2000) {
+                    if ($this->vramAddr >= 0x3f00 && $this->vramAddr < 0x4000) {
+                        $this->palette->write($this->vramAddr - 0x3f00, $data);
+                    } else {
+                        $this->vram->write($this->calcVramAddr(), $data);
+                    }
+                } else {
+                    $offset = ($addr >= 0x1000) ? 0x1000 : 0;
+                    unset($this->spriteCache[(int) (($addr - $offset) / 16)][$offset]);
+                    $this->bus->writeByPpu($addr, $data);
+                }
+                $this->vramAddr += $this->vramOffset();
                 break;
         }
         $this->registers[$addr] = $data;
@@ -302,21 +341,11 @@ class Ppu
         $this->registers[0x02] &= 0xbf;
     }
 
-    private function setSpriteHit(): void
-    {
-        $this->registers[0x02] |= 0x40;
-    }
-
     private function hasSpriteHit(): bool
     {
         $y = $this->spriteRam->read(0);
 
         return ($y === $this->line) and $this->isBackgroundEnable() and $this->isSpriteEnable();
-    }
-
-    private function hasVblankIrqEnabled(): bool
-    {
-        return (bool) ($this->registers[0] & 0x80);
     }
 
     private function isBackgroundEnable(): bool
@@ -329,23 +358,6 @@ class Ppu
         return (bool) ($this->registers[0x01] & 0x10);
     }
 
-    private function scrollTileX(): int
-    {
-        /*
-          Name table id and address
-          +------------+------------+
-          |            |            |
-          |  0(0x2000) |  1(0x2400) |
-          |            |            |
-          +------------+------------+
-          |            |            |
-          |  2(0x2800) |  3(0x2C00) |
-          |            |            |
-          +------------+------------+
-        */
-        return ~~(($this->scrollX + (($this->nameTableId() % 2) * 256)) / 8);
-    }
-
     private function scrollTileY(): int
     {
         return ~~(($this->scrollY + (~~($this->nameTableId() / 2) * 240)) / 8);
@@ -354,11 +366,6 @@ class Ppu
     private function tileY(): int
     {
         return ~~($this->line / 8) + $this->scrollTileY();
-    }
-
-    private function backgroundTableOffset(): int
-    {
-        return ($this->registers[0] & 0x10) ? 0x1000 : 0x0000;
     }
 
     private function setVblank(): void
@@ -418,7 +425,11 @@ class Ppu
         $spriteId = $this->getSpriteId($tileX, $tileY, $offset);
         $attr = $this->getAttribute($tileX, $tileY, $offset);
         $paletteId = ($attr >> ($blockId * 2)) & 0x03;
-        $sprite = $this->buildSprite($spriteId, $this->backgroundTableOffset(), $characterRam);
+        $sprite = $this->buildSprite(
+            $spriteId,
+            ($this->registers[0] & 0x10) ? 0x1000 : 0x0000,
+            $characterRam
+        );
 
         return new Tile(
             $sprite,
@@ -439,7 +450,19 @@ class Ppu
         // background of a line.
         // Build viewport + 1 tile for background scroll.
         for ($x = 0; $x < 32 + 1; $x = ($x + 1) | 0) {
-            $tileX = ($x + $this->scrollTileX());
+            /*
+              Name table id and address
+              +------------+------------+
+              |            |            |
+              |  0(0x2000) |  1(0x2400) |
+              |            |            |
+              +------------+------------+
+              |            |            |
+              |  2(0x2800) |  3(0x2C00) |
+              |            |            |
+              +------------+------------+
+            */
+            $tileX = ($x + ~~(($this->scrollX + (($this->nameTableId() % 2) * 256)) / 8));
             $clampedTileX = $tileX % 32;
             $nameTableId = (~~($tileX / 32) % 2) + $tableIdOffset;
             $offsetAddrByNameTable = $nameTableId * 0x400;
@@ -493,96 +516,10 @@ class Ppu
         return $sprite;
     }
 
-    private function readCharacterRAM(int $addr): int
-    {
-        return $this->bus->readByPpu($addr);
-    }
-
-    private function writeCharacterRAM(int $addr, int $data): void
-    {
-        if ($addr >= 0x1000) {
-            $offset = 0x1000;
-        } else {
-            $offset = 0;
-        }
-        unset($this->spriteCache[(int) (($addr - $offset) / 16)][$offset]);
-        $this->bus->writeByPpu($addr, $data);
-    }
-
-    private function readVram(): int
-    {
-        $buf = $this->vramReadBuf;
-        if ($this->vramAddr >= 0x2000) {
-            $addr = $this->calcVramAddr();
-            $this->vramAddr += $this->vramOffset();
-            if ($addr >= 0x3F00) {
-                return $this->vram->read($addr);
-            }
-            $this->vramReadBuf = $this->vram->read($addr);
-        } else {
-            $this->vramReadBuf = $this->readCharacterRAM($this->vramAddr);
-            $this->vramAddr += $this->vramOffset();
-        }
-
-        return $buf;
-    }
-
-    private function writeSpriteRamAddr(int $data): void
-    {
-        $this->spriteRamAddr = $data;
-    }
-
-    private function writeSpriteRamData(int $data): void
-    {
-        $this->spriteRam->write($this->spriteRamAddr, $data);
-        ++$this->spriteRamAddr;
-    }
-
-    private function writeScrollData(int $data): void
-    {
-        if ($this->isHorizontalScroll) {
-            $this->isHorizontalScroll = false;
-            $this->scrollX = $data & 0xFF;
-        } else {
-            $this->scrollY = $data & 0xFF;
-            $this->isHorizontalScroll = true;
-        }
-    }
-
-    private function writeVramAddr(int $data): void
-    {
-        if ($this->isLowerVramAddr) {
-            $this->vramAddr += $data;
-            $this->isLowerVramAddr = false;
-        } else {
-            $this->vramAddr = $data << 8;
-            $this->isLowerVramAddr = true;
-        }
-    }
-
     public function calcVramAddr(): int
     {
         return ($this->vramAddr >= 0x3000 && $this->vramAddr < 0x3f00)
             ? $this->vramAddr -= 0x3000
             : $this->vramAddr - 0x2000;
-    }
-
-    private function writeVramData(int $data): void
-    {
-        if ($this->vramAddr >= 0x2000) {
-            if ($this->vramAddr >= 0x3f00 && $this->vramAddr < 0x4000) {
-                $this->palette->write($this->vramAddr - 0x3f00, $data);
-            } else {
-                $this->writeVram($this->calcVramAddr(), $data);
-            }
-        } else {
-            $this->writeCharacterRAM($this->vramAddr, $data);
-        }
-        $this->vramAddr += $this->vramOffset();
-    }
-
-    private function writeVram(int $addr, int $data): void
-    {
-        $this->vram->write($addr, $data);
     }
 }
