@@ -32,7 +32,11 @@ class Rom
     public function read(int $addr): int
     {
         if (!isset($this->rom[$addr])) {
-            throw new RuntimeException(sprintf('Invalid address on rom read. Address: 0x%s Rom: 0x0000 - 0x%s', dechex($addr), dechex($this->size)));
+            throw new RuntimeException(sprintf(
+                'Invalid address on rom read. Address: 0x%s Rom: 0x0000 - 0x%s',
+                dechex($addr),
+                dechex($this->size)
+            ));
         }
 
         return $this->rom[$addr];

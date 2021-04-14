@@ -11,9 +11,9 @@ use function array_fill;
 
 class Ppu
 {
-    public const SPRITES_NUMBER = 0x100;
+    private const SPRITES_NUMBER = 0x100;
 
-    public const SPRITE_CONSTANT_MAP = [
+    private const SPRITE_CONSTANT_MAP = [
         [0x01 << ~~(0 / 8), 0 % 8],
         [0x01 << ~~(1 / 8), 1 % 8],
         [0x01 << ~~(2 / 8), 2 % 8],
@@ -207,7 +207,7 @@ class Ppu
                     $this->interrupts->deassertNmi();
 
                     return new RenderingData(
-                        $this->getPalette(),
+                        $this->palette->read(),
                         $this->isBackgroundEnable() ? $this->background : [],
                         $this->isSpriteEnable() ? $this->sprites : []
                     );
@@ -328,14 +328,6 @@ class Ppu
         return $this->registers[0x00] & 0x03;
     }
 
-    /**
-     * @return int[]
-     */
-    private function getPalette(): array
-    {
-        return $this->palette->read();
-    }
-
     private function clearSpriteHit(): void
     {
         $this->registers[0x02] &= 0xbf;
@@ -388,21 +380,6 @@ class Ppu
         return ~~(($tileX % 4) / 2) + (~~(($tileY % 4) / 2)) * 2;
     }
 
-    private function getAttribute(int $tileX, int $tileY, int $offset): int
-    {
-        $addr = ~~($tileX / 4) + (~~($tileY / 4) * 8) + 0x03C0 + $offset;
-
-        return $this->vram->read($this->mirrorDownSpriteAddr($addr));
-    }
-
-    private function getSpriteId(int $tileX, int $tileY, int $offset): int
-    {
-        $tileNumber = $tileY * 32 + $tileX;
-        $spriteAddr = $this->mirrorDownSpriteAddr($tileNumber + $offset);
-
-        return $this->vram->read($spriteAddr);
-    }
-
     private function mirrorDownSpriteAddr(int $addr): int
     {
         if (!$this->isHorizontalMirror) {
@@ -422,8 +399,13 @@ class Ppu
     {
         // INFO see. http://hp.vector.co.jp/authors/VA042397/nes/ppu.html
         $blockId = $this->getBlockId($tileX, $tileY);
-        $spriteId = $this->getSpriteId($tileX, $tileY, $offset);
-        $attr = $this->getAttribute($tileX, $tileY, $offset);
+        $tileNumber = $tileY * 32 + $tileX;
+        $spriteAddr = $this->mirrorDownSpriteAddr($tileNumber + $offset);
+        $spriteId = $this->vram->read($spriteAddr);
+
+        $addr = ~~($tileX / 4) + (~~($tileY / 4) * 8) + 0x03C0 + $offset;
+        $attr =  $this->vram->read($this->mirrorDownSpriteAddr($addr));
+
         $paletteId = ($attr >> ($blockId * 2)) & 0x03;
         $sprite = $this->buildSprite(
             $spriteId,
@@ -516,7 +498,7 @@ class Ppu
         return $sprite;
     }
 
-    public function calcVramAddr(): int
+    private function calcVramAddr(): int
     {
         return ($this->vramAddr >= 0x3000 && $this->vramAddr < 0x3f00)
             ? $this->vramAddr -= 0x3000
