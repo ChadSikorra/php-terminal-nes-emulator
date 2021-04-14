@@ -157,13 +157,13 @@ class Apu
                 $this->dmc->control($data);
                 break;
             case self::REG_DMC_COUNTER:
-                // @todo dmc value
+                $this->dmc->writeValue($data);
                 break;
             case self::REG_DMC_ADDRESS:
-                // @todo dmc write address
+                $this->dmc->writeAddress($data);
                 break;
             case self::REG_DMC_LENGTH:
-                // @todo dmc write length
+                $this->dmc->writeLength($data);
                 break;
             case self::REG_STATUS:
                 $this->control($data);

@@ -13,6 +13,8 @@ class Dmc extends Channel
         214, 190, 170, 160, 143, 127, 113, 107, 95, 80, 71, 64, 53, 42, 36, 27,
     ];
 
+    public int $value = 0;
+
     public int $sampleAddress = 0;
 
     public int $sampleLength = 0;
@@ -47,36 +49,77 @@ class Dmc extends Channel
 
     public function writeValue(int $data): void
     {
-        // @todo
+        $this->value = $data & 0x7F;
     }
 
     public function writeAddress(int $data): void
     {
-        // @todo
+        $this->sampleAddress = 0xC000 | ($data << 6);
     }
 
     public function writeLength(int $data): void
     {
-        // @todo
+        $this->sampleLength = ($data << 4) | 1;
     }
 
     public function restart(): void
     {
-        // @todo
+        $this->currentAddress = $this->sampleAddress;
+        $this->currentLength = $this->sampleLength;
     }
 
     public function stepTimer(): void
     {
-        // @todo
+        if (!$this->isEnabled()) {
+            return;
+        }
+        $this->stepReader();
+
+        if ($this->tickValue === 0) {
+            $this->tickValue = $this->tickPeriod;
+            $this->stepShifter();
+        } else {
+            $this->tickValue--;
+        }
     }
 
     public function stepReader(): void
     {
-        // @todo
+        if ($this->currentLength > 0 && $this->bitCount == 0) {
+            // @todo Need access to the CPU here. No concept of stall for the current CPU implementation either.
+            // $this->cpu->stall += 4;
+		    // $this->shiftRegister = $this->cpu->read($this->currentAddress);
+		    $this->bitCount = 8;
+
+		    $this->currentAddress++;
+            if ($this->currentAddress == 0) {
+                $this->currentAddress = 0x8000;
+            }
+            $this->currentLength--;
+
+            if ($this->currentLength == 0 && $this->isLoop) {
+                $this->restart();
+            }
+	    }
     }
 
     public function stepShifter(): void
     {
-        // @todo
+        if ($this->bitCount === 0) {
+            return;
+	    }
+
+        if (($this->shiftRegister & 1) === 1) {
+            if ($this->value <= 125) {
+                $this->value += 2;
+		    }
+        } else {
+            if ($this->value >= 2) {
+                $this->value -= 2;
+		    }
+        }
+
+        $this->shiftRegister >>= 1;
+	    $this->bitCount--;
     }
 }
