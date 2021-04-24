@@ -84,6 +84,8 @@ class NesFileParser
     {
         if ($this->logger) {
             $this->logger->info($message);
+        } else {
+            echo $message . PHP_EOL;
         }
     }
 }
