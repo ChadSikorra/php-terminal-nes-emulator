@@ -15,7 +15,7 @@ class NesFileParser
 
     public const CHARACTER_ROM_SIZE = 0x2000;
 
-    private ?LoggerInterface $logger = null;
+    private ?LoggerInterface $logger;
 
     public function __construct(?LoggerInterface $logger = null)
     {
