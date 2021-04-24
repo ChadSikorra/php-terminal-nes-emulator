@@ -36,33 +36,43 @@ class NesFileParser
         for ($i = 0; $i < strlen($nesBuffer); ++$i) {
             $nes[$i] = (ord($nesBuffer[$i]) & 0xFF);
         }
-        $this->log(sprintf("Rom size: %d (0x%s)\n", count($nes), dechex(count($nes))));
 
         $programRomPages = $nes[4];
-        $this->log(sprintf("Program ROM pages: %d\n", $programRomPages));
         $characterRomPages = $nes[5];
-        $this->log(sprintf("Character ROM pages: %d\n", $characterRomPages));
         $isHorizontalMirror = !($nes[6] & 0x01);
+        $is4ScreenMirroring = (bool)(($nes[6] >> 3) & 1);
+        $isBatteryPresent = (bool)(($nes[6] >> 1) & 1);
         $mapper = ((($nes[6] & 0xF0) >> 4) | $nes[7] & 0xF0);
-        $this->log(sprintf("Mapper: %d\n", $mapper));
+
         $characterRomStart = self::NES_HEADER_SIZE + $programRomPages * self::PROGRAM_ROM_SIZE;
         $characterRomEnd = $characterRomStart + $characterRomPages * self::CHARACTER_ROM_SIZE;
-        $this->log(sprintf("Character ROM start: 0x%s (%d)\n", dechex($characterRomStart), $characterRomStart));
-        $this->log(sprintf("Character ROM end: 0x%s (%d)\n", dechex($characterRomEnd), $characterRomEnd));
+
+        $this->log(sprintf("Rom size: %d (0x%s)", count($nes), dechex(count($nes))));
+        $this->log(sprintf("Mirroring mode: %s", $isHorizontalMirror ? 'horizontal' : 'vertical'));
+        $this->log(sprintf("4-screen mirror: %s", $is4ScreenMirroring ? 'true' : 'false'));
+        $this->log(sprintf("Battery present: %s", $isBatteryPresent ? 'true' : 'false'));
+        $this->log(sprintf("Mapper: %d", $mapper));
+        $this->log(sprintf("Program ROM pages: %d", $programRomPages));
+        $this->log(sprintf("Character ROM pages: %d", $characterRomPages));
+        $this->log(sprintf("Character ROM start: 0x%s (%d)", dechex($characterRomStart), $characterRomStart));
+        $this->log(sprintf("Character ROM end: 0x%s (%d)", dechex($characterRomEnd), $characterRomEnd));
 
         $nesRom = new NesRom(
             $isHorizontalMirror,
             array_slice($nes, self::NES_HEADER_SIZE, ($characterRomStart - 1) - self::NES_HEADER_SIZE),
-            array_slice($nes, $characterRomStart, ($characterRomEnd - 1) - $characterRomStart)
+            array_slice($nes, $characterRomStart, ($characterRomEnd - 1) - $characterRomStart),
+            $isBatteryPresent,
+            $is4ScreenMirroring,
+            $mapper
         );
 
         $this->log(sprintf(
-            "Program   ROM: 0x0000 - 0x%s (%d bytes)\n",
+            "Program   ROM: 0x0000 - 0x%s (%d bytes)",
             dechex(count($nesRom->programRom)),
             count($nesRom->programRom)
         ));
         $this->log(sprintf(
-            "Character ROM: 0x0000 - 0x%s (%d bytes)\n",
+            "Character ROM: 0x0000 - 0x%s (%d bytes)",
             dechex(count($nesRom->characterRom)),
             count($nesRom->characterRom)
         ));
