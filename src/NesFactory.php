@@ -13,7 +13,7 @@ use Nes\Bus\Rom;
 use Nes\Cpu\Cpu;
 use Nes\Cpu\Dma;
 use Nes\Cpu\Interrupts;
-use Nes\NesFile\NesFile;
+use Nes\NesFile\NesFileParser;
 use Nes\Ppu\Ppu;
 use Nes\Ppu\Renderer\RendererInterface;
 use Nes\Throttle\PhpThrottle;
@@ -22,13 +22,20 @@ use RuntimeException;
 
 class NesFactory
 {
+    private NesFileParser $nesFileParser;
+
+    public function __construct(?NesFileParser $nesFileParser = null)
+    {
+        $this->nesFileParser = $nesFileParser ?? new NesFileParser();
+    }
+
     public function loadFromRomBinary(
         string $nesRomBinary,
         KeypadInterface $keypad,
         RendererInterface $renderer,
         ?ThrottleInterface $throttle = null,
     ): Nes {
-        $nesRom = NesFile::parse($nesRomBinary);
+        $nesRom = $this->nesFileParser->parse($nesRomBinary);
 
         $ram = new Ram(2048);
         $characterMem = new Ram(0x4000);
