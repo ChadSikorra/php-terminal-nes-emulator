@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Nes\NesFile;
 
 use Exception;
+use Nes\Bus\Rom;
 use Psr\Log\LoggerInterface;
 
 class NesFileParser
@@ -57,9 +58,14 @@ class NesFileParser
         $this->log(sprintf("Character ROM start: 0x%s (%d)", dechex($characterRomStart), $characterRomStart));
         $this->log(sprintf("Character ROM end: 0x%s (%d)", dechex($characterRomEnd), $characterRomEnd));
 
+        $programRom = new Rom(array_slice(
+                $nes,
+                self::NES_HEADER_SIZE,
+                ($characterRomStart - 1) - self::NES_HEADER_SIZE)
+        );
         $nesRom = new NesRom(
             $isHorizontalMirror,
-            array_slice($nes, self::NES_HEADER_SIZE, ($characterRomStart - 1) - self::NES_HEADER_SIZE),
+            $programRom,
             array_slice($nes, $characterRomStart, ($characterRomEnd - 1) - $characterRomStart),
             $isBatteryPresent,
             $is4ScreenMirroring,
@@ -68,8 +74,8 @@ class NesFileParser
 
         $this->log(sprintf(
             "Program   ROM: 0x0000 - 0x%s (%d bytes)",
-            dechex(count($nesRom->programRom)),
-            count($nesRom->programRom)
+            dechex($nesRom->programRom->size()),
+            $nesRom->programRom->size()
         ));
         $this->log(sprintf(
             "Character ROM: 0x0000 - 0x%s (%d bytes)",

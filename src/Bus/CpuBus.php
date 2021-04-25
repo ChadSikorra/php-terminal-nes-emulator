@@ -6,14 +6,13 @@ namespace Nes\Bus;
 
 use Nes\Apu\Apu;
 use Nes\Bus\Keypad\KeypadInterface;
+use Nes\Bus\Mapper\MapperInterface;
 use Nes\Cpu\Dma;
 use Nes\Ppu\Ppu;
 
 class CpuBus
 {
     public Ram $ram;
-
-    public Rom $programRom;
 
     public Ppu $ppu;
 
@@ -23,77 +22,62 @@ class CpuBus
 
     private Dma $dma;
 
-    private bool $use_mirror;
+    private MapperInterface $mapper;
 
     public function __construct(
         Ram $ram,
-        Rom $programRom,
         Ppu $ppu,
         Apu $apu,
         KeypadInterface $keypad,
-        Dma $dma
+        Dma $dma,
+        MapperInterface $mapper,
     ) {
         $this->ram = $ram;
-        $this->programRom = $programRom;
         $this->apu = $apu;
         $this->ppu = $ppu;
         $this->keypad = $keypad;
         $this->dma = $dma;
-        $this->use_mirror = $this->programRom->size() <= 0x4000;
+        $this->mapper = $mapper;
     }
 
     public function readByCpu(int $addr): int
     {
         return match (true){
+            $addr < 0x0800 => $this->ram->read($addr),
+            $addr < 0x2000 => $this->ram->read($addr - 0x0800),
+            $addr < 0x4000 => $this->ppu->read(($addr - 0x2000) % 8),
+            $addr === 0x4014 => $this->ppu->read($addr),
             $addr === 0x4015 => $this->apu->read(),
             $addr === 0x4016 => (int) $this->keypad->read(1),
             $addr === 0x4017 => (int) $this->keypad->read(2),
-            // Mirror, if prom block number equals 1
-            $addr >= 0xC000 => $this->use_mirror
-                ? $this->programRom->read($addr - 0xC000)
-                : $this->programRom->read($addr - 0x8000),
-            // ROM
-            $addr >= 0x8000 => $this->programRom->read($addr - 0x8000),
-            $addr < 0x0800 => $this->ram->read($addr),
-            // mirror
-            $addr < 0x2000 => $this->ram->read($addr - 0x0800),
-            // mirror
-            $addr < 0x4000 => $this->ppu->read(($addr - 0x2000) % 8),
+            $addr >= 0x6000 => $this->mapper->read($addr),
             default => 0,
         };
     }
 
     public function writeByCpu(int $addr, int $data): void
     {
-        if ($addr < 0x0800) {
-            // RAM
-            $this->ram->write($addr, $data);
-
-            return;
-        } elseif ($addr < 0x2000) {
-            // mirror
-            $this->ram->write($addr - 0x0800, $data);
-
-            return;
-        } elseif ($addr < 0x2008) {
-            // PPU
-            $this->ppu->write($addr - 0x2000, $data);
-
-            return;
-        }
-
-        switch ($addr) {
-            case 0x4014:
+        switch (true){
+            case $addr < 0x2000:
+                $this->ram->write($addr % 0x8000, $data);
+                break;
+            case $addr < 0x4000:
+                $this->ppu->write((0x2000 + $addr) % 8, $data);
+                break;
+            case $addr === 0x4014:
                 $this->dma->write($data);
                 break;
-            case 0x4016:
+            case $addr === 0x4016:
                 $this->keypad->write($data);
                 break;
             case $addr >= 0x4000 && $addr <= 4013:
-            case 0x4015:
             case 0x4017:
+            case 0x4015:
                 $this->apu->write($addr, $data);
                 break;
-        }
+            case $addr >= 0x6000:
+                $this->mapper->write($addr, $data);
+                break;
+        };
     }
 }

@@ -7,7 +7,6 @@ namespace Nes\Cpu;
 use Exception;
 use Nes\Bus\CpuBus;
 use Nes\Cpu\Registers\Registers;
-use Nes\Debugger;
 
 class Cpu
 {
@@ -727,48 +726,5 @@ class Cpu
         $addr &= 0xFFFF;
 
         return $this->bus->readByCpu($addr) | $this->bus->readByCpu($addr + 1) << 8;
-    }
-
-    private function debug(int $opcode): void
-    {
-        printf(
-            "Invalid opcode: %s in pc: %04x\n",
-            dechex($opcode),
-            $this->registers->pc
-        );
-        if ($this->registers->pc < 0x0800) {
-            Debugger::dump($this->bus->ram->ram);
-        } else {
-            if ($this->registers->pc < 0x2000) {
-                printf("Redirect ram: %04x\n", $this->registers->pc - 0x0800);
-                Debugger::dump($this->bus->ram->ram);
-            } else {
-                if ($this->registers->pc < 0x4000) {
-                    printf("Ppu: %04x\n", ($this->registers->pc - 0x2000) % 8);
-                    Debugger::dump($this->bus->ppu->registers);
-                } else {
-                    if (0x4016 === $this->registers->pc) {
-                        printf("Keypad\n");
-                    } else {
-                        if ($this->registers->pc >= 0xC000) {
-                            if ($this->bus->programRom->size() <= 0x4000) {
-                                printf("Redirect program rom: %04x\n", $this->registers->pc - 0xC000);
-                                Debugger::dump($this->bus->programRom->rom);
-                            } else {
-                                printf("Redirect program rom: %04x\n", $this->registers->pc - 0x8000);
-                                Debugger::dump($this->bus->programRom->rom);
-                            }
-                        } else {
-                            if ($this->registers->pc >= 0x8000) {
-                                printf("Redirect program rom: %04x\n", $this->registers->pc - 0x8000);
-                                Debugger::dump($this->bus->programRom->rom);
-                            } else {
-                                printf("Something wrong...\n");
-                            }
-                        }
-                    }
-                }
-            }
-        }
     }
 }

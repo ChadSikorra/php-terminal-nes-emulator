@@ -7,9 +7,9 @@ namespace Nes;
 use Nes\Apu\Apu;
 use Nes\Bus\CpuBus;
 use Nes\Bus\Keypad\KeypadInterface;
+use Nes\Bus\Mapper\MapperFactory;
 use Nes\Bus\PpuBus;
 use Nes\Bus\Ram;
-use Nes\Bus\Rom;
 use Nes\Cpu\Cpu;
 use Nes\Cpu\Dma;
 use Nes\Cpu\Interrupts;
@@ -24,9 +24,14 @@ class NesFactory
 {
     private NesFileParser $nesFileParser;
 
-    public function __construct(?NesFileParser $nesFileParser = null)
-    {
+    private MapperFactory $mapperFactory;
+
+    public function __construct(
+        ?NesFileParser $nesFileParser = null,
+        ?MapperFactory $mapperFactory = null,
+    ) {
         $this->nesFileParser = $nesFileParser ?? new NesFileParser();
+        $this->mapperFactory = $mapperFactory ?? new MapperFactory();
     }
 
     public function loadFromRomBinary(
@@ -43,7 +48,6 @@ class NesFactory
             $characterMem->write($i, $nesRom->characterRom[$i]);
         }
 
-        $programRom = new Rom($nesRom->programRom);
         $ppuBus = new PpuBus($characterMem);
         $interrupts = new Interrupts();
         $ppu = new Ppu($ppuBus, $interrupts, $nesRom->isHorizontalMirror);
@@ -51,11 +55,11 @@ class NesFactory
         $dma = new Dma($ram, $ppu);
         $cpuBus = new CpuBus(
             $ram,
-            $programRom,
             $ppu,
             $apu,
             $keypad,
             $dma,
+            $this->mapperFactory->makeMapper($nesRom, $ram)
         );
         $cpu = new Cpu($cpuBus, $interrupts);
         $cpu->reset();
