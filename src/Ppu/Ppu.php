@@ -353,7 +353,9 @@ class Ppu
     {
         $y = $this->spriteRam->read(0);
 
-        return ($y === $this->line) and $this->isBackgroundEnable() and $this->isSpriteEnable();
+        return ($y === $this->line)
+            && $this->isBackgroundEnable()
+            && $this->isSpriteEnable();
     }
 
     private function isBackgroundEnable(): bool
@@ -401,7 +403,7 @@ class Ppu
         if (!$this->isHorizontalMirror) {
             return $addr;
         }
-        if (($addr >= 0x0400) and ($addr < 0x0800) or ($addr >= 0x0C00)) {
+        if (($addr >= 0x0400) && ($addr < 0x0800) || ($addr >= 0x0C00)) {
             return $addr - 0x400;
         }
 
