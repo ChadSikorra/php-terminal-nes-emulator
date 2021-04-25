@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nes\NesFile;
 
+use Nes\Bus\Chr;
 use Nes\Bus\Rom;
 
 class NesRom
@@ -18,18 +19,12 @@ class NesRom
 
     public Rom $programRom;
 
-    /**
-     * @var int[]
-     */
-    public array $characterRom;
+    public Chr $characterRom;
 
-    /**
-     * @param int[] $characterRom
-     */
     public function __construct(
         bool $isHorizontalMirror,
         Rom $programRom,
-        array $characterRom,
+        Chr $characterRom,
         bool $hasBattery,
         bool $isFourScreen,
         int $mapper

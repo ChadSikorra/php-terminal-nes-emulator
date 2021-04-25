@@ -11,6 +11,22 @@ use function array_fill;
 
 class Ppu
 {
+    private const REG_PPU_CTRL = 0x2000;
+
+    private const REG_PPU_MASK = 0x2001;
+
+    private const REG_PPU_STATUS = 0x2002;
+
+    private const REG_OAM_ADDR = 0x2003;
+
+    private const REG_OAM_DATA = 0x2004;
+
+    private const REG_PPU_SCROLL = 0x2005;
+
+    private const REG_PPU_ADDR = 0x2006;
+
+    private const REG_PPU_DATA = 0x2007;
+
     private const SPRITES_NUMBER = 0x100;
 
     private const SPRITE_CONSTANT_MAP = [
@@ -93,6 +109,11 @@ class Ppu
      */
     public array $registers;
 
+    /**
+     * @var Tile[]
+     */
+    public array $background;
+
     private int $cycle;
 
     private int $line;
@@ -110,11 +131,6 @@ class Ppu
     private Ram $spriteRam;
 
     private PpuBus $bus;
-
-    /**
-     * @var Tile[]
-     */
-    public array $background;
 
     /**
      * @var SpriteWithAttribute[]
@@ -145,7 +161,7 @@ class Ppu
 
     public function __construct(PpuBus $bus, Interrupts $interrupts, bool $isHorizontalMirror)
     {
-        $this->registers = array_fill(0, 7, 0);
+        $this->registers = array_fill(self::REG_PPU_CTRL, 7, 0);
         $this->cycle = 0;
         $this->line = 0;
         $this->isLowerVramAddr = false;
@@ -186,7 +202,7 @@ class Ppu
             ++$this->line;
 
             if ($this->hasSpriteHit()) {
-                $this->registers[0x02] |= 0x40;
+                $this->registers[self::REG_PPU_STATUS] |= 0x40;
             }
 
             if ($this->line <= 240 && 0 === $this->line % 8 && $this->scrollY <= 240) {
@@ -196,7 +212,7 @@ class Ppu
             switch ($this->line) {
                 case 241:
                     $this->setVblank();
-                    if ($this->registers[0] & 0x80) {
+                    if ($this->registers[self::REG_PPU_CTRL] & 0x80) {
                         $this->interrupts->assertNmi();
                     }
                     break;
@@ -230,15 +246,15 @@ class Ppu
     public function read(int $addr): int
     {
         switch ($addr) {
-            case 0x0002:
+            case self::REG_PPU_STATUS:
                 $this->isHorizontalScroll = true;
-                $data = $this->registers[0x02];
+                $data = $this->registers[self::REG_PPU_STATUS];
                 $this->clearVblank();
                 // $this->clearSpriteHit();
                 return $data;
-            case 0x0004:
+            case self::REG_OAM_DATA:
                 return $this->spriteRam->read($this->spriteRamAddr);
-            case 0x0007:
+            case self::REG_PPU_DATA:
                 $buf = $this->vramReadBuf;
 
                 if ($this->vramAddr >= 0x2000) {
@@ -262,14 +278,14 @@ class Ppu
     public function write(int $addr, int $data): void
     {
         switch ($addr) {
-            case 0x0003:
+            case self::REG_OAM_ADDR:
                 $this->spriteRamAddr = $data;
                 break;
-            case 0x0004:
+            case self::REG_OAM_DATA:
                 $this->spriteRam->write($this->spriteRamAddr, $data);
                 ++$this->spriteRamAddr;
                 break;
-            case 0x0005:
+            case self::REG_PPU_SCROLL:
                 if ($this->isHorizontalScroll) {
                     $this->isHorizontalScroll = false;
                     $this->scrollX = $data & 0xFF;
@@ -278,7 +294,7 @@ class Ppu
                     $this->isHorizontalScroll = true;
                 }
                 break;
-            case 0x0006:
+            case self::REG_PPU_ADDR:
                 if ($this->isLowerVramAddr) {
                     $this->vramAddr += $data;
                     $this->isLowerVramAddr = false;
@@ -287,7 +303,7 @@ class Ppu
                     $this->isLowerVramAddr = true;
                 }
                 break;
-            case 0x0007:
+            case self::REG_PPU_DATA:
                 if ($this->vramAddr >= 0x2000) {
                     if ($this->vramAddr >= 0x3f00 && $this->vramAddr < 0x4000) {
                         $this->palette->write($this->vramAddr - 0x3f00, $data);
@@ -320,17 +336,17 @@ class Ppu
 
     private function vramOffset(): int
     {
-        return ($this->registers[0x00] & 0x04) ? 32 : 1;
+        return ($this->registers[self::REG_PPU_CTRL] & 0x04) ? 32 : 1;
     }
 
     private function nameTableId(): int
     {
-        return $this->registers[0x00] & 0x03;
+        return $this->registers[self::REG_PPU_CTRL] & 0x03;
     }
 
     private function clearSpriteHit(): void
     {
-        $this->registers[0x02] &= 0xbf;
+        $this->registers[self::REG_PPU_STATUS] &= 0xbf;
     }
 
     private function hasSpriteHit(): bool
@@ -342,12 +358,12 @@ class Ppu
 
     private function isBackgroundEnable(): bool
     {
-        return (bool) ($this->registers[0x01] & 0x08);
+        return (bool) ($this->registers[self::REG_PPU_MASK] & 0x08);
     }
 
     private function isSpriteEnable(): bool
     {
-        return (bool) ($this->registers[0x01] & 0x10);
+        return (bool) ($this->registers[self::REG_PPU_MASK] & 0x10);
     }
 
     private function scrollTileY(): int
@@ -362,17 +378,17 @@ class Ppu
 
     private function setVblank(): void
     {
-        $this->registers[0x02] |= 0x80;
+        $this->registers[self::REG_PPU_STATUS] |= 0x80;
     }
 
     private function isVblank(): bool
     {
-        return (bool) ($this->registers[0x02] & 0x80);
+        return (bool) ($this->registers[self::REG_PPU_STATUS] & 0x80);
     }
 
     private function clearVblank(): void
     {
-        $this->registers[0x02] &= 0x7F;
+        $this->registers[self::REG_PPU_STATUS] &= 0x7F;
     }
 
     private function getBlockId(int $tileX, int $tileY): int
@@ -409,7 +425,7 @@ class Ppu
         $paletteId = ($attr >> ($blockId * 2)) & 0x03;
         $sprite = $this->buildSprite(
             $spriteId,
-            ($this->registers[0] & 0x10) ? 0x1000 : 0x0000,
+            ($this->registers[self::REG_PPU_CTRL] & 0x10) ? 0x1000 : 0x0000,
             $characterRam
         );
 
@@ -455,7 +471,7 @@ class Ppu
 
     private function buildSprites(): void
     {
-        $offset = ($this->registers[0] & 0x08) ? 0x1000 : 0x0000;
+        $offset = ($this->registers[self::REG_PPU_CTRL] & 0x08) ? 0x1000 : 0x0000;
         $characterRam = $this->bus->characterRam->ram;
         for ($i = 0; $i < self::SPRITES_NUMBER; $i = ($i + 4) | 0) {
             // INFO: Offset sprite Y position, because First and last 8line is not rendered.

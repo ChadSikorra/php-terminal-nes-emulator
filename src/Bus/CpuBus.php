@@ -20,9 +20,9 @@ class CpuBus
 
     public KeypadInterface $keypad;
 
-    private Dma $dma;
-
     private MapperInterface $mapper;
+
+    private Dma $dma;
 
     public function __construct(
         Ram $ram,
@@ -44,8 +44,8 @@ class CpuBus
     {
         return match (true){
             $addr < 0x0800 => $this->ram->read($addr),
-            $addr < 0x2000 => $this->ram->read($addr - 0x0800),
-            $addr < 0x4000 => $this->ppu->read(($addr - 0x2000) % 8),
+            $addr < 0x2000 => $this->ram->read($addr % 0x0800),
+            $addr < 0x4000 => $this->ppu->read($addr + 0x2000 % 8),
             $addr === 0x4014 => $this->ppu->read($addr),
             $addr === 0x4015 => $this->apu->read(),
             $addr === 0x4016 => (int) $this->keypad->read(1),
@@ -62,7 +62,7 @@ class CpuBus
                 $this->ram->write($addr % 0x8000, $data);
                 break;
             case $addr < 0x4000:
-                $this->ppu->write((0x2000 + $addr) % 8, $data);
+                $this->ppu->write(0x2000 + $addr % 8, $data);
                 break;
             case $addr === 0x4014:
                 $this->dma->write($data);

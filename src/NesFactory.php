@@ -44,8 +44,8 @@ class NesFactory
 
         $ram = new Ram(2048);
         $characterMem = new Ram(0x4000);
-        for ($i = 0; $i < count($nesRom->characterRom); ++$i) {
-            $characterMem->write($i, $nesRom->characterRom[$i]);
+        for ($i = 0; $i < $nesRom->characterRom->size(); ++$i) {
+            $characterMem->write($i, $nesRom->characterRom->read($i));
         }
 
         $ppuBus = new PpuBus($characterMem);
