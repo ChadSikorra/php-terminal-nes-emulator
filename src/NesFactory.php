@@ -39,6 +39,7 @@ class NesFactory
         KeypadInterface $keypad,
         RendererInterface $renderer,
         ?ThrottleInterface $throttle = null,
+        bool $soundEnabled = false,
     ): Nes {
         $nesRom = $this->nesFileParser->parse($nesRomBinary);
 
@@ -51,7 +52,7 @@ class NesFactory
         $ppuBus = new PpuBus($characterMem);
         $interrupts = new Interrupts();
         $ppu = new Ppu($ppuBus, $interrupts, $nesRom->isHorizontalMirror);
-        $apu = new Apu();
+        $apu = $soundEnabled ? new Apu() : null;
         $dma = new Dma($ram, $ppu);
         $cpuBus = new CpuBus(
             $ram,
@@ -79,6 +80,7 @@ class NesFactory
         KeypadInterface $keypad,
         RendererInterface $renderer,
         ?ThrottleInterface $throttle = null,
+        bool $soundEnabled = false,
     ): Nes {
         if (!is_file($nesRomFilename)) {
             throw new RuntimeException('Nes ROM file not found.');
@@ -90,6 +92,7 @@ class NesFactory
             $keypad,
             $renderer,
             $throttle,
+            $soundEnabled
         );
     }
 }

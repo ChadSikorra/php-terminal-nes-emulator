@@ -16,7 +16,7 @@ class CpuBus
 
     public Ppu $ppu;
 
-    public Apu $apu;
+    public ?Apu $apu;
 
     public KeypadInterface $keypad;
 
@@ -27,7 +27,7 @@ class CpuBus
     public function __construct(
         Ram $ram,
         Ppu $ppu,
-        Apu $apu,
+        ?Apu $apu,
         KeypadInterface $keypad,
         Dma $dma,
         MapperInterface $mapper,
@@ -47,7 +47,7 @@ class CpuBus
             $addr < 0x2000 => $this->ram->read($addr % 0x0800),
             $addr < 0x4000 => $this->ppu->read($addr + 0x2000 % 8),
             $addr === 0x4014 => $this->ppu->read($addr),
-            $addr === 0x4015 => $this->apu->read(),
+            $addr === 0x4015 => $this->apu ? $this->apu->read() : 0,
             $addr === 0x4016 => (int) $this->keypad->read(1),
             $addr === 0x4017 => (int) $this->keypad->read(2),
             $addr >= 0x6000 => $this->mapper->read($addr),
@@ -73,7 +73,9 @@ class CpuBus
             case $addr >= 0x4000 && $addr <= 4013:
             case 0x4017:
             case 0x4015:
-                $this->apu->write($addr, $data);
+                if ($this->apu) {
+                    $this->apu->write($addr, $data);
+                }
                 break;
             case $addr >= 0x6000:
                 $this->mapper->write($addr, $data);
