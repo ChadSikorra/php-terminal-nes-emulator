@@ -4,25 +4,35 @@ declare(strict_types=1);
 
 namespace Nes\Ppu\Canvas;
 
-use GdImage;
+use function fopen;
+use function fclose;
+use function imagecolorallocate;
+use function imagesetpixel;
+use function imagepng;
+use function rewind;
+use function stream_get_contents;
 
-class PngCanvas implements CanvasInterface
+class PngReceiverCanvas implements CanvasInterface
 {
-    private int $serial = 0;
-
     /**
      * @var int[]
      */
     private array $colorCache = [];
 
     /**
-     * @var false|GdImage|resource
+     * @var false|resource
      */
     private $image;
 
-    public function __construct()
+    /**
+     * @var callable
+     */
+    private $receiver;
+
+    public function __construct(callable $reciever)
     {
         $this->image = imagecreatetruecolor(256, 224);
+        $this->receiver = $reciever;
     }
 
     public function __destruct()
@@ -32,6 +42,8 @@ class PngCanvas implements CanvasInterface
 
     public function draw(array $frameBuffer, int $fps, int $fis): void
     {
+        $memory = fopen('php://memory','r+');
+
         for ($y = 0; $y < 224; $y++) {
             $y_x_100 = $y * 0x100;
             for ($x = 0; $x < 256; $x++) {
@@ -47,9 +59,10 @@ class PngCanvas implements CanvasInterface
                 imagesetpixel($this->image, $x, $y, $this->colorCache[$frameBuffer[$index]]);
             }
         }
-        if (!is_dir('screen')) {
-            mkdir('screen');
-        }
-        imagepng($this->image, sprintf('screen/%08d.png', $this->serial++));
+
+        imagepng($this->image, $memory);
+        rewind($memory);
+        call_user_func($this->receiver, stream_get_contents($memory));
+        fclose($memory);
     }
 }
