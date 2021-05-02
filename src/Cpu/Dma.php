@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Nes\Cpu;
 
 use Nes\Bus\Ram;
-use Nes\Ppu\Ppu;
+use Nes\Ppu\PpuInterface;
 
 class Dma
 {
@@ -15,9 +15,9 @@ class Dma
 
     private Ram $ram;
 
-    private Ppu $ppu;
+    private PpuInterface $ppu;
 
-    public function __construct(Ram $ram, Ppu $ppu)
+    public function __construct(Ram $ram, PpuInterface $ppu)
     {
         $this->ram = $ram;
         $this->ppu = $ppu;

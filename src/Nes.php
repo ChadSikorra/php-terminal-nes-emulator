@@ -9,7 +9,7 @@ use Nes\Bus\Keypad\KeypadFetchInterface;
 use Nes\Bus\Keypad\KeypadInterface;
 use Nes\Cpu\Cpu;
 use Nes\Cpu\Dma;
-use Nes\Ppu\Ppu;
+use Nes\Ppu\PpuInterface;
 use Nes\Ppu\Renderer\RendererInterface;
 use Nes\Throttle\ThrottleInterface;
 
@@ -17,7 +17,7 @@ class Nes
 {
     private Cpu $cpu;
 
-    private Ppu $ppu;
+    private PpuInterface $ppu;
 
     private RendererInterface $renderer;
 
@@ -35,7 +35,7 @@ class Nes
     public array $frame;
 
     public function __construct(
-        Ppu $ppu,
+        PpuInterface $ppu,
         Dma $dma,
         Cpu $cpu,
         RendererInterface $renderer,

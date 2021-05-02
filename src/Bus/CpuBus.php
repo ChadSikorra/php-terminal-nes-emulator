@@ -8,13 +8,13 @@ use Nes\Apu\Apu;
 use Nes\Bus\Keypad\KeypadInterface;
 use Nes\Bus\Mapper\MapperInterface;
 use Nes\Cpu\Dma;
-use Nes\Ppu\Ppu;
+use Nes\Ppu\PpuInterface;
 
 class CpuBus
 {
     public Ram $ram;
 
-    public Ppu $ppu;
+    public PpuInterface $ppu;
 
     public ?Apu $apu;
 
@@ -26,7 +26,7 @@ class CpuBus
 
     public function __construct(
         Ram $ram,
-        Ppu $ppu,
+        PpuInterface $ppu,
         ?Apu $apu,
         KeypadInterface $keypad,
         Dma $dma,

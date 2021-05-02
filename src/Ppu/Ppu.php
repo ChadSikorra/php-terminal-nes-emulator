@@ -9,7 +9,7 @@ use Nes\Bus\Ram;
 use Nes\Cpu\Interrupts;
 use function array_fill;
 
-class Ppu
+class Ppu implements PpuInterface
 {
     private const REG_PPU_CTRL = 0x2000;
 
@@ -107,12 +107,12 @@ class Ppu
     /**
      * @var int[]
      */
-    public array $registers;
+    private array $registers;
 
     /**
      * @var Tile[]
      */
-    public array $background;
+    private array $background;
 
     private int $cycle;
 

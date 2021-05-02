@@ -46,6 +46,12 @@ class NesFileParser
         $isBatteryPresent = (bool)(($nes[6] >> 1) & 1);
         $mapper = ((($nes[6] & 0xF0) >> 4) | $nes[7] & 0xF0);
 
+        $mirrorMode = match (true) {
+            $is4ScreenMirroring === true => NesRom::MIRROR_FOUR,
+            $isHorizontalMirror ===true => NesRom::MIRROR_HORIZONTAL,
+            default => NesRom::MIRROR_VERTICAL
+        };
+
         $characterRomStart = self::NES_HEADER_SIZE + $programRomPages * self::PROGRAM_ROM_SIZE;
         $characterRomEnd = $characterRomStart + $characterRomPages * self::CHARACTER_ROM_SIZE;
 
@@ -69,7 +75,7 @@ class NesFileParser
             $characterRomStart, ($characterRomEnd - 1) - $characterRomStart)
         );
         $nesRom = new NesRom(
-            $isHorizontalMirror,
+            $mirrorMode,
             $programRom,
             $characterRom,
             $isBatteryPresent,

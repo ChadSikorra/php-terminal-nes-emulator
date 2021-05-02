@@ -48,10 +48,10 @@ class NesFactory
         for ($i = 0; $i < $nesRom->characterRom->size(); ++$i) {
             $characterMem->write($i, $nesRom->characterRom->read($i));
         }
-
+        $mapper = $this->mapperFactory->makeMapper($nesRom, $ram);
         $ppuBus = new PpuBus($characterMem);
         $interrupts = new Interrupts();
-        $ppu = new Ppu($ppuBus, $interrupts, $nesRom->isHorizontalMirror);
+        $ppu = new Ppu($ppuBus, $interrupts, $nesRom->isHorizontalMirror());
         $apu = $soundEnabled ? new Apu() : null;
         $dma = new Dma($ram, $ppu);
         $cpuBus = new CpuBus(
@@ -60,7 +60,7 @@ class NesFactory
             $apu,
             $keypad,
             $dma,
-            $this->mapperFactory->makeMapper($nesRom, $ram)
+            $mapper,
         );
         $cpu = new Cpu($cpuBus, $interrupts);
         $cpu->reset();
