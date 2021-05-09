@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Nes\Ppu\Canvas;
 
+use Nes\Ppu\Renderer\Renderer;
 use function fopen;
 use function fclose;
 use function imagecolorallocate;
@@ -29,10 +30,22 @@ class PngReceiverCanvas implements CanvasInterface
      */
     private $receiver;
 
+    /**
+     * @var array<int, array<int, int>>
+     */
+    private array $colorRgbMap = [];
+
     public function __construct(callable $reciever)
     {
         $this->image = imagecreatetruecolor(256, 224);
         $this->receiver = $reciever;
+        foreach (Renderer::COLORS as $color) {
+            $this->colorRgbMap[$color] = [
+                ($color >> 16) & 0xff,
+                ($color >> 8) & 0xff,
+                $color & 0xff,
+            ];
+        }
     }
 
     public function __destruct()
@@ -51,9 +64,9 @@ class PngReceiverCanvas implements CanvasInterface
                 if (!isset($this->colorCache[$frameBuffer[$index]])) {
                     $this->colorCache[$frameBuffer[$index]] = imagecolorallocate(
                         $this->image,
-                        ($frameBuffer[$index] >> 16) & 0xff,
-                        ($frameBuffer[$index] >> 8) & 0xff,
-                        $frameBuffer[$index] & 0xff
+                        $this->colorRgbMap[$frameBuffer[$index]][0],
+                        $this->colorRgbMap[$frameBuffer[$index]][1],
+                        $this->colorRgbMap[$frameBuffer[$index]][2],
                     );
                 }
                 imagesetpixel($this->image, $x, $y, $this->colorCache[$frameBuffer[$index]]);
