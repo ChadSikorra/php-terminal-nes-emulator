@@ -71,43 +71,71 @@ class Ppu implements PpuInterface
     | 0x3F20-0x3FFF  |  mirror of 0x3F00-0x3F1F   |
     */
 
-    /*
-      Control Register1 0x2000
-
-    | bit  | description                                 |
-    +------+---------------------------------------------+
-    |  7   | Assert NMI when VBlank 0: disable, 1:enable |
-    |  6   | PPU master/slave, always 1                  |
-    |  5   | Sprite size 0: 8x8, 1: 8x16                 |
-    |  4   | Bg pattern table 0:0x0000, 1:0x1000         |
-    |  3   | sprite pattern table 0:0x0000, 1:0x1000     |
-    |  2   | PPU memory increment 0: +=1, 1:+=32         |
-    |  1-0 | Name table 0x00: 0x2000                     |
-    |      |            0x01: 0x2400                     |
-    |      |            0x02: 0x2800                     |
-    |      |            0x03: 0x2C00                     |
-    */
-
-    /*
-      Control Register2 0x2001
-
-    | bit  | description                                 |
-    +------+---------------------------------------------+
-    |  7-5 | Background color  0x00: Black               |
-    |      |                   0x01: Green               |
-    |      |                   0x02: Blue                |
-    |      |                   0x04: Red                 |
-    |  4   | Enable sprite                               |
-    |  3   | Enable background                           |
-    |  2   | Sprite mask       render left end           |
-    |  1   | Background mask   render left end           |
-    |  0   | Display type      0: color, 1: mono         |
-    */
-
     /**
      * @var int[]
      */
     private array $registers;
+
+    /*
+      Control Register2 0x2001
+
+        | bit  | description                                 |
+        +------+---------------------------------------------+
+        |  7-5 | Background color  0x00: Black               |
+        |      |                   0x01: Green               |
+        |      |                   0x02: Blue                |
+        |      |                   0x04: Red                 |
+        |  4   | Enable sprite                               |
+        |  3   | Enable background                           |
+        |  2   | Sprite mask       render left end           |
+        |  1   | Background mask   render left end           |
+        |  0   | Display type      0: color, 1: mono         |
+    */
+    private int $maskGreyscale = 0;
+
+    private int $maskBackgroundLeftmost = 0;
+
+    private int $maskSpriteLeftmost = 0;
+
+    private int $maskBackground  = 0;
+
+    private int $maskSprites = 0;
+
+    private int $maskEmphasizeRed = 0;
+
+    private int $maskEmphasizeGreen = 0;
+
+    private int $maskEmphasizeBlue = 0;
+
+    /*
+      Control Register1 0x2000
+
+        | bit  | description                                 |
+        +------+---------------------------------------------+
+        |  7   | Assert NMI when VBlank 0: disable, 1:enable |
+        |  6   | PPU master/slave, always 1                  |
+        |  5   | Sprite size 0: 8x8, 1: 8x16                 |
+        |  4   | Bg pattern table 0:0x0000, 1:0x1000         |
+        |  3   | sprite pattern table 0:0x0000, 1:0x1000     |
+        |  2   | PPU memory increment 0: +=1, 1:+=32         |
+        |  1-0 | Name table 0x00: 0x2000                     |
+        |      |            0x01: 0x2400                     |
+        |      |            0x02: 0x2800                     |
+        |      |            0x03: 0x2C00                     |
+    */
+    private int $ctrlNameTable = 0;
+
+    private int $ctrlIncrement = 0;
+
+    private int $ctrlSpriteTable = 0;
+
+    private int $ctrlBackgroundTable = 0;
+
+    private int $ctrlSpriteSize = 0;
+
+    private int $ctrlMasterSlave = 0;
+
+    private int $ctrlNmiOut = 0;
 
     /**
      * @var Tile[]
@@ -201,7 +229,7 @@ class Ppu implements PpuInterface
             switch ($this->line) {
                 case 241:
                     $this->setVblank();
-                    if ($this->registers[self::REG_PPU_CTRL] & 0x80) {
+                    if ($this->ctrlNmiOut) {
                         $this->interrupts->assertNmi();
                     }
                     break;
@@ -213,8 +241,8 @@ class Ppu implements PpuInterface
 
                     return new RenderingData(
                         $this->palette->read(),
-                        $this->isBackgroundEnable() ? $this->background : [],
-                        $this->isSpriteEnable() ? $this->sprites : []
+                        $this->maskBackground ? $this->background : [],
+                        $this->maskSprites ? $this->sprites : []
                     );
             }
         }
@@ -267,6 +295,12 @@ class Ppu implements PpuInterface
     public function write(int $addr, int $data): void
     {
         switch ($addr) {
+            case self::REG_PPU_CTRL:
+                $this->writeControl($data);
+                break;
+            case self::REG_PPU_MASK:
+                $this->writeMask($data);
+                break;
             case self::REG_OAM_ADDR:
                 $this->spriteRamAddr = $data;
                 break;
@@ -323,14 +357,64 @@ class Ppu implements PpuInterface
         $this->spriteRam->write($addr % 0x100, $data);
     }
 
-    private function vramOffset(): int
+    /**
+     *   7  bit  0
+     *   ---- ----
+     *   BGRs bMmG
+     *   |||| ||||
+     *   |||| |||+- Greyscale (0: normal color, 1: produce a greyscale display)
+     *   |||| ||+-- 1: Show background in leftmost 8 pixels of screen, 0: Hide
+     *   |||| |+--- 1: Show sprites in leftmost 8 pixels of screen, 0: Hide
+     *   |||| +---- 1: Show background
+     *   |||+------ 1: Show sprites
+     *   ||+------- Emphasize red (green on PAL/Dendy)
+     *   |+-------- Emphasize green (red on PAL/Dendy)
+     *   +--------- Emphasize blue
+     */
+    private function writeMask(int $data): void
     {
-        return ($this->registers[self::REG_PPU_CTRL] & 0x04) ? 32 : 1;
+        $this->maskGreyscale = ($data >> 0) & 1;
+        $this->maskBackgroundLeftmost = ($data >> 1) & 1;
+        $this->maskSpriteLeftmost = ($data >> 2) & 1;
+        $this->maskBackground = ($data >> 3) & 1;
+        $this->maskSprites = ($data >> 4) & 1;
+        $this->maskEmphasizeRed = ($data >> 5) & 1;
+        $this->maskEmphasizeGreen = ($data >> 6) & 1;
+        $this->maskEmphasizeBlue = ($data >> 7) & 1;
     }
 
-    private function nameTableId(): int
+    /**
+     *   7  bit  0
+     *   ---- ----
+     *   VPHB SINN
+     *   |||| ||||
+     *   |||| ||++- Base nametable address
+     *   |||| ||    (0 = $2000; 1 = $2400; 2 = $2800; 3 = $2C00)
+     *   |||| |+--- VRAM address increment per CPU read/write of PPUDATA
+     *   |||| |     (0: add 1, going across; 1: add 32, going down)
+     *   |||| +---- Sprite pattern table address for 8x8 sprites
+     *   ||||       (0: $0000; 1: $1000; ignored in 8x16 mode)
+     *   |||+------ Background pattern table address (0: $0000; 1: $1000)
+     *   ||+------- Sprite size (0: 8x8 pixels; 1: 8x16 pixels)
+     *   |+-------- PPU master/slave select
+     *   |          (0: read backdrop from EXT pins; 1: output color on EXT pins)
+     *   +--------- Generate an NMI at the start of the
+     *              vertical blanking interval (0: off; 1: on)
+     */
+    private function writeControl(int $data): void
     {
-        return $this->registers[self::REG_PPU_CTRL] & 0x03;
+        $this->ctrlNameTable = $data & 0x03;
+        $this->ctrlIncrement = ($data >> 2) & 1;
+        $this->ctrlSpriteTable = ($data >> 3) & 1;
+        $this->ctrlBackgroundTable = ($data >> 4) & 1;
+        $this->ctrlSpriteSize = ($data >> 5) & 1;
+        $this->ctrlMasterSlave = ($data >> 6) & 1;
+        $this->ctrlNmiOut = ($data >> 7) & 1;
+    }
+
+    private function vramOffset(): int
+    {
+        return $this->ctrlIncrement ? 32 : 1;
     }
 
     private function clearSpriteHit(): void
@@ -340,26 +424,14 @@ class Ppu implements PpuInterface
 
     private function hasSpriteHit(): bool
     {
-        $y = $this->spriteRam->read(0);
-
-        return ($y === $this->line)
-            && $this->isBackgroundEnable()
-            && $this->isSpriteEnable();
-    }
-
-    private function isBackgroundEnable(): bool
-    {
-        return (bool) ($this->registers[self::REG_PPU_MASK] & 0x08);
-    }
-
-    private function isSpriteEnable(): bool
-    {
-        return (bool) ($this->registers[self::REG_PPU_MASK] & 0x10);
+        return ($this->spriteRam->read(0) === $this->line)
+            && $this->maskBackground
+            && $this->maskSprites;
     }
 
     private function scrollTileY(): int
     {
-        return ~~(($this->scrollY + (~~($this->nameTableId() / 2) * 240)) / 8);
+        return ~~(($this->scrollY + (~~($this->ctrlNameTable / 2) * 240)) / 8);
     }
 
     private function tileY(): int
@@ -416,7 +488,7 @@ class Ppu implements PpuInterface
         $paletteId = ($attr >> ($blockId * 2)) & 0x03;
         $sprite = $this->buildSprite(
             $spriteId,
-            ($this->registers[self::REG_PPU_CTRL] & 0x10) ? 0x1000 : 0x0000,
+            ($this->ctrlBackgroundTable ? 0x1000 : 0x0000),
             $characterRam
         );
 
@@ -451,7 +523,7 @@ class Ppu implements PpuInterface
               |            |            |
               +------------+------------+
             */
-            $tileX = ($x + ~~(($this->scrollX + (($this->nameTableId() % 2) * 256)) / 8));
+            $tileX = ($x + ~~(($this->scrollX + (($this->ctrlNameTable % 2) * 256)) / 8));
             $clampedTileX = $tileX % 32;
             $nameTableId = (~~($tileX / 32) % 2) + $tableIdOffset;
             $offsetAddrByNameTable = $nameTableId * 0x400;
@@ -462,8 +534,9 @@ class Ppu implements PpuInterface
 
     private function buildSprites(): void
     {
-        $offset = ($this->registers[self::REG_PPU_CTRL] & 0x08) ? 0x1000 : 0x0000;
+        $offset = $this->ctrlSpriteTable ? 0x1000 : 0x0000;
         $characterRam = $this->bus->characterRam->ram;
+
         for ($i = 0; $i < self::SPRITES_NUMBER; $i = ($i + 4) | 0) {
             // INFO: Offset sprite Y position, because First and last 8line is not rendered.
             $y = $this->spriteRam->read($i) - 8;
