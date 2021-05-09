@@ -112,21 +112,21 @@ class Ppu implements PpuInterface
     /**
      * @var Tile[]
      */
-    private array $background;
+    private array $background = [];
 
-    private int $cycle;
+    private int $cycle = 0;
 
-    private int $line;
+    private int $line = 0;
 
-    private bool $isLowerVramAddr;
+    private bool $isLowerVramAddr = false;
 
-    private int $spriteRamAddr;
+    private int $spriteRamAddr = 0;
 
-    private int $vramAddr;
+    private int $vramAddr = 0;
 
     private Ram $vram;
 
-    private int $vramReadBuf;
+    private int $vramReadBuf = 0;
 
     private Ram $spriteRam;
 
@@ -135,17 +135,17 @@ class Ppu implements PpuInterface
     /**
      * @var SpriteWithAttribute[]
      */
-    private array $sprites;
+    private array $sprites = [];
 
     private Palette $palette;
 
     private Interrupts $interrupts;
 
-    private bool $isHorizontalScroll;
+    private bool $isHorizontalScroll = true;
 
-    private int $scrollX;
+    private int $scrollX = 0;
 
-    private int $scrollY;
+    private int $scrollY = 0;
 
     private bool $isHorizontalMirror;
 
@@ -162,22 +162,11 @@ class Ppu implements PpuInterface
     public function __construct(PpuBus $bus, Interrupts $interrupts, bool $isHorizontalMirror)
     {
         $this->registers = array_fill(self::REG_PPU_CTRL, 7, 0);
-        $this->cycle = 0;
-        $this->line = 0;
-        $this->isLowerVramAddr = false;
-        $this->isHorizontalScroll = true;
-        $this->vramAddr = 0x0000;
         $this->vram = new Ram(0x2000);
-        $this->vramReadBuf = 0;
         $this->spriteRam = new Ram(0x100);
-        $this->spriteRamAddr = 0;
-        $this->background = [];
-        $this->sprites = [];
         $this->bus = $bus;
         $this->interrupts = $interrupts;
         $this->isHorizontalMirror = $isHorizontalMirror;
-        $this->scrollX = 0;
-        $this->scrollY = 0;
         $this->palette = new Palette();
         $this->defaultSpriteBuffer = array_fill(0, 8, array_fill(0, 8, 0));
     }
