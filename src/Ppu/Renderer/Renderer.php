@@ -32,7 +32,7 @@ class Renderer implements RendererInterface
     public function __construct(CanvasInterface $canvas)
     {
         // 256 x 240
-        $this->frameBuffer = array_fill(0, 256 * 256, 0);
+        $this->frameBuffer = array_fill(0, 256 * 240, 0);
 
         $this->canvas = $canvas;
     }
