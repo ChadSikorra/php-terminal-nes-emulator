@@ -250,7 +250,6 @@ class Ppu implements PpuInterface
         return null;
     }
 
-
     /**
      * | bit  | description                                 |
      * +------+---------------------------------------------+
@@ -489,7 +488,8 @@ class Ppu implements PpuInterface
         $sprite = $this->buildSprite(
             $spriteId,
             ($this->ctrlBackgroundTable ? 0x1000 : 0x0000),
-            $characterRam
+            $characterRam,
+            !((($blockId + 1) % 32 === 0) && $this->maskBackgroundLeftmost === 0)
         );
 
         return new Tile(
@@ -546,7 +546,12 @@ class Ppu implements PpuInterface
             $spriteId = $this->spriteRam->read($i + 1);
             $attr = $this->spriteRam->read($i + 2);
             $x = $this->spriteRam->read($i + 3);
-            $sprite = $this->buildSprite($spriteId, $offset, $characterRam);
+            $sprite = $this->buildSprite(
+                $spriteId,
+                $offset,
+                $characterRam,
+                !((($i % 8) === 0) && $this->maskSpriteLeftmost === 0)
+            );
             $this->sprites[$i / 4] = new SpriteWithAttribute($sprite, $x, $y, $attr, $spriteId);
         }
     }
@@ -556,8 +561,12 @@ class Ppu implements PpuInterface
      *
      * @return array<int[]>
      */
-    private function buildSprite(int $spriteId, int $offset, array $characterRam): array
-    {
+    private function buildSprite(
+        int $spriteId,
+        int $offset,
+        array $characterRam,
+        bool $showLeftmost,
+    ): array {
         if (isset($this->spriteCache[$spriteId][$offset])) {
             return $this->spriteCache[$spriteId][$offset];
         }
@@ -569,7 +578,7 @@ class Ppu implements PpuInterface
             list($addend, $spriteOffsetBase) = self::SPRITE_CONSTANT_MAP[$i];
             for ($j = 0; $j < 8; ++$j) {
                 if ($ram & (0x80 >> $j)) {
-                    $sprite[$spriteOffsetBase][$j] += $addend;
+                    $sprite[$spriteOffsetBase][$j] += $showLeftmost ? $addend : 0;
                 }
             }
         }
